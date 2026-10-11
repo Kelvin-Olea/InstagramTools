@@ -7,11 +7,11 @@
   --text:         #ede4d4;
   --text-mid:     #9a8a72;
   --text-dim:     #4e4236;
-  --accent:       #d47c1e;
-  --accent-hi:    #e8921e;
-  --accent-fade:  rgba(212,124,30,0.1);
+  --accent:       #37e614;
+  --accent-hi:    #84e614;
+  --accent-fade:  #111f0a52;
   --border:       rgba(255,210,150,0.07);
-  --border-hi:    rgba(255,210,150,0.14);
+  --border-hi:    rgba(36, 33, 30, 0.14);
   --red:          #bf3535;
   --red-fade:     rgba(191,53,53,0.1);
 
@@ -30,8 +30,8 @@ body {
   background-color: var(--bg);
   /* warm vignette */
   background-image:
-    radial-gradient(ellipse 70% 50% at 10% 0%,   rgba(212,124,30,0.06) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 60% at 90% 100%,  rgba(160,80,10,0.04)  0%, transparent 60%);
+    radial-gradient(circle 25rem at 10% 0%,  var(--accent-fade) 0%, transparent 80%),
+    radial-gradient(ellipse 50% 60% at 90% 100%,  var(--accent-fade)  0%, transparent 60%);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
@@ -55,7 +55,7 @@ body::after {
 
 /* ─── LAYOUT ─────────────────────────────────────────────── */
 #app {
-  max-width: 880px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0 28px 100px;
 }
@@ -69,10 +69,11 @@ header {
 }
 
 .aperture {
-  width: 64px;
-  height: 64px;
+  width: 70px;
+  height: 70px;
   color: var(--accent);
   margin-bottom: 28px;
+  align-self: center;
   opacity: 0.85;
   animation: slowSpin 24s linear infinite, fadeIn 0.8s ease both;
 }
@@ -83,6 +84,8 @@ header h1 {
   font-weight: 400;
   line-height: 0.88;
   letter-spacing: 0.015em;
+  text-align: center;
+  align-self: center;
   color: var(--text);
   animation: slideUp 0.7s 0.05s ease both;
 }
@@ -94,8 +97,11 @@ header h1 {
   font-size: 18px;
   line-height: 1.5;
   color: var(--text-mid);
+  align-self: center;
   border-left: 2px solid var(--accent);
+  border-right: 2px solid var(--accent);
   padding-left: 18px;
+  padding-right: 18px;
   animation: fadeIn 0.9s 0.25s ease both;
 }
 
