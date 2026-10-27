@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+
 </head>
 <body>
 
@@ -28,11 +29,43 @@
 
     <main class="container">
 
-      <!-- SEARCH -->
+      <!-- Search -->
       <section class="search-section">
         <div class="section-label">TARGET PROFILES</div>
-        <div class="input-group">
-          <div id="usernames-container">
+
+        <!-- Tab buttons -->
+        <div class="tabs" role="tablist" aria-label="Scan type">
+          <button type="button" class="tab" role="tab" id="tab-friends"
+                  aria-selected="true" aria-controls="panel-friends">
+            Friends
+          </button>
+          <button type="button" class="tab" role="tab" id="tab-mutual"
+                  aria-selected="false" aria-controls="panel-mutual">
+            Mutual Followers
+          </button>
+        </div>
+
+        <!-- TAB 1: single profile -->
+        <div class="input-group tab-panel" id="panel-friends" role="tabpanel" aria-labelledby="tab-friends">
+          <p class="tab-hint">Scan a single profile.</p>
+          <div class="usernames-container">
+            <div class="input-row">
+              <span class="input-num">01</span>
+              <input type="text" class="username-input" placeholder="username"
+                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-primary scan-btn" data-mode="friends">
+              Run Scan
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 2: multiple profiles -->
+        <div class="input-group tab-panel" id="panel-mutual" role="tabpanel" aria-labelledby="tab-mutual" hidden>
+          <p class="tab-hint">Compare two or more profiles to find the followers they share.</p>
+          <div class="usernames-container" id="mutual-usernames">
             <div class="input-row">
               <span class="input-num">01</span>
               <input type="text" class="username-input" placeholder="username"
@@ -45,15 +78,15 @@
             </div>
           </div>
           <div class="btn-row">
-            <button id="add-username-btn" class="btn btn-ghost">
+            <button type="button" id="add-username-btn" class="btn btn-ghost">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.5"/>
                 <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.5"/>
               </svg>
               Add Profile
             </button>
-            <button id="search-btn" class="btn btn-primary">
-              Run Scan &nbsp;→
+            <button type="button" class="btn btn-primary scan-btn" data-mode="mutual">
+              Run Scan
             </button>
           </div>
         </div>
@@ -116,17 +149,43 @@
   </div>
 
   <script>
-    const usernamesContainer = document.getElementById('usernames-container');
-    const addUsernameBtn     = document.getElementById('add-username-btn');
-    const searchBtn          = document.getElementById('search-btn');
-    const clearBtn           = document.getElementById('clear-btn');
-    const loadingSection     = document.getElementById('loading-section');
-    const resultsSection     = document.getElementById('results-section');
-    const errorSection       = document.getElementById('error-section');
-    const followersList      = document.getElementById('followers-list');
+    const mutualContainer = document.getElementById('mutual-usernames');
+    const addUsernameBtn  = document.getElementById('add-username-btn');
+    const clearBtn        = document.getElementById('clear-btn');
+    const loadingSection  = document.getElementById('loading-section');
+    const resultsSection  = document.getElementById('results-section');
+    const errorSection    = document.getElementById('error-section');
+    const followersList   = document.getElementById('followers-list');
 
-    let inputCount = 2;
+    const tabs   = Array.from(document.querySelectorAll('.tab'));
+    const panels = Array.from(document.querySelectorAll('.tab-panel'));
 
+    let inputCount = 2; // rows currently in the Mutual Followers tab
+
+    // Switch the current tab to {tab} //
+    function activateTab(tab) {
+
+      tabs.forEach(t => {
+        const selected = t === tab;
+        t.setAttribute('aria-selected', String(selected));
+      });
+
+      // Hide any panel that isn't connected to the current selected tab button
+      panels.forEach(p => { p.hidden = p.id !== tab.getAttribute('aria-controls'); });
+
+      // Delete all old results and stuff
+      resultsSection.style.display = 'none';
+      errorSection.style.display   = 'none';
+      loadingSection.style.display = 'none';
+    }
+
+    // Add a listener to each tab button
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => activateTab(tab));
+    });
+
+    // Creates a new username insertion, and appends
+    // it to the end of the input usernames section
     addUsernameBtn.addEventListener('click', () => {
       inputCount++;
       const row = document.createElement('div');
@@ -136,23 +195,29 @@
         <input type="text" class="username-input" placeholder="username"
                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       `;
-      usernamesContainer.appendChild(row);
+      mutualContainer.appendChild(row);
       row.querySelector('input').focus();
     });
 
-    searchBtn.addEventListener('click', async () => {
-      const usernames = Array.from(document.querySelectorAll('.username-input'))
-        .map(i => i.value.trim())
-        .filter(v => v.length > 0);
+    // Run scan (one handler for both tabs)  //
 
-      if (usernames.length < 2 && usernames.length > 0) {
-        await fetchFriends(usernames);
-        return 
-      } else{
-        showError('Please enter at least 1 username.');
-        return;
-      }
-      await fetchMutualFollowers(usernames);
+    document.querySelectorAll('.scan-btn').forEach(btn => {
+      btn.addEventListener('click', async () => { // Listen for clicks on scan buttons (for all tabs)
+        const mode  = btn.dataset.mode;
+        const panel = btn.closest('.tab-panel');
+
+        const usernames = Array.from(panel.querySelectorAll('.username-input'))
+          .map(i => i.value.trim())
+          .filter(v => v.length > 0);
+
+        if (mode === 'friends') {
+          if (usernames.length < 1) return showError('Please enter a username.');
+          return fetchFriends(usernames);
+        }
+
+        if (usernames.length < 2) return showError('Please enter at least 2 usernames.');
+        return fetchMutualFollowers(usernames);
+      });
     });
 
     clearBtn.addEventListener('click', () => {
@@ -160,6 +225,8 @@
       errorSection.style.display   = 'none';
       loadingSection.style.display = 'none';
     });
+
+    /* ---------- API calls ---------- */
 
     async function fetchMutualFollowers(usernames) {
       try {
@@ -209,6 +276,7 @@
       }
     }
 
+    /* ---------- Rendering ---------- */
 
     function displayResults(data) {
       document.getElementById('accounts-count').textContent = data.usernames.length;

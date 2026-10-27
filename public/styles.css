@@ -18,6 +18,10 @@
   --f-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
   --f-body:    'Crimson Pro', Georgia, serif;
   --f-mono:    'Fira Code', 'Courier New', monospace;
+
+  --tab-border: rgba(255, 255, 255, 0.14);
+  --tab-muted: rgba(255, 255, 255, 0.5);
+  --tab-active: var(--accent, #d4a24c);
 }
 
 /* ─── RESET ──────────────────────────────────────────────── */
@@ -239,6 +243,42 @@ header h1 {
 }
 
 .btn-primary:active { transform: translateY(1px); }
+
+/* ─── TABS ────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--tab-border);
+  margin-bottom: 1.25rem;
+}
+.tab {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.7rem 1.25rem;
+  color: var(--tab-muted);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.tab:hover { color: inherit; }
+.tab:focus-visible { outline: 2px solid var(--tab-active); outline-offset: -2px; }
+.tab[aria-selected="true"] {
+  color: var(--tab-active);
+  border-bottom-color: var(--tab-active);
+}
+.tab-panel[hidden] { display: none; }
+.tab-hint {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  opacity: 0.65;
+}
+
 
 /* ─── RESULTS ────────────────────────────────────────────── */
 .results-section { margin-bottom: 28px; }
