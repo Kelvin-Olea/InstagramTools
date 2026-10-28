@@ -13,27 +13,35 @@ class InstagramService {
             console.warn('WARNING: CSRF_TOKEN is not set in .env');
         } else if (!process.env.DS_USER_ID) {
             console.warn('WARNING: DS_USER_ID is not set in .env');
+        } else if (!process.env.X_ASBD_ID) {
+            console.warn('WARNING: X_ASBD_ID is not set in .env');
         }
 
         this.headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
             'Accept': '*/*',
-            'Accept-Language': 'en-US',
+            'Accept-Language': 'en-US,en;q=0.9',
             'X-IG-App-ID': '936619743392459',
             'X-Requested-With': 'XMLHttpRequest',
+
             'Sec-Ch-Ua-Platform': '"Linux"',
             'Sec-Ch-Ua': '"Not)A;Brand";v="8", "Chromium";v="138"',
             'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Dest': 'empty',
 
             'Cookie': `sessionid=${process.env.INSTAGRAM_SESSION_ID}; csrftoken=${process.env.CSRF_TOKEN}; ds_user_id=${process.env.DS_USER_ID}`,
             'X-Csrftoken': `${process.env.CSRF_TOKEN}`,
         };
+
+        if (process.env.X_ASBD_ID) this.headers['X-ASBD-ID'] = process.env.X_ASBD_ID;
     }
 
     getHeaders(){
         return{
             ...this.headers,
-            'Referer': `${this.currentTargetProfile}`
+            'Referer': `${this.baseUrl}/${this.currentTargetProfile}/`
         }
     }
 
