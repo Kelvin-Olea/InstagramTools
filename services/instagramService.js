@@ -14,8 +14,8 @@ class InstagramService {
             'User-Agent': 'Instagram 76.0.0.15.395 Android (24/7.0; 380dpi; 1080x1920; OnePlus; ONEPLUS A3010; OnePlus3T; qcom; en_US; 138226743)',
             'Accept': '*/*',
             'Accept-Language': 'en-US',
-            'X-IG-App-ID': '936619743392459'
-            // 'Cookie': `sessionid=${process.env.INSTAGRAM_SESSION_ID};`,
+            'X-IG-App-ID': '936619743392459',
+            'Cookie': `sessionid=${process.env.INSTAGRAM_SESSION_ID};`,
         };
     }
 
