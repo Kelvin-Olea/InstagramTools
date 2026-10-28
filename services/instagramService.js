@@ -3,20 +3,38 @@ require('dotenv').config();
 
 class InstagramService {
     constructor() {
-        this.baseUrl = 'https://i.instagram.com/api/v1';
+        this.baseUrl = 'https://www.instagram.com';
         this.cache = new Map();
+        this.currentTargetProfile = ''
 
         if (!process.env.INSTAGRAM_SESSION_ID) {
             console.warn('WARNING: INSTAGRAM_SESSION_ID is not set in .env');
+        } else if (!process.env.CSRF_TOKEN) {
+            console.warn('WARNING: CSRF_TOKEN is not set in .env');
+        } else if (!process.env.DS_USER_ID) {
+            console.warn('WARNING: DS_USER_ID is not set in .env');
         }
 
         this.headers = {
-            'User-Agent': 'Instagram 76.0.0.15.395 Android (24/7.0; 380dpi; 1080x1920; OnePlus; ONEPLUS A3010; OnePlus3T; qcom; en_US; 138226743)',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
             'Accept': '*/*',
             'Accept-Language': 'en-US',
             'X-IG-App-ID': '936619743392459',
-            'Cookie': `sessionid=${process.env.INSTAGRAM_SESSION_ID};`,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Sec-Ch-Ua-Platform': '"Linux"',
+            'Sec-Ch-Ua': '"Not)A;Brand";v="8", "Chromium";v="138"',
+            'Sec-Ch-Ua-Mobile': '?0',
+
+            'Cookie': `sessionid=${process.env.INSTAGRAM_SESSION_ID}; csrftoken=${process.env.CSRF_TOKEN}; ds_user_id=${process.env.DS_USER_ID}`,
+            'X-Csrftoken': `${process.env.CSRF_TOKEN}`,
         };
+    }
+
+    getHeaders(){
+        return{
+            ...this.headers,
+            'Referer': `${this.currentTargetProfile}`
+        }
     }
 
     /**
