@@ -199,14 +199,13 @@
       row.querySelector('input').focus();
     });
 
-    // Run scan (one handler for both tabs)  //
-
+    // Run the scan //
     document.querySelectorAll('.scan-btn').forEach(btn => {
       btn.addEventListener('click', async () => { // Listen for clicks on scan buttons (for all tabs)
-        const mode  = btn.dataset.mode;
-        const panel = btn.closest('.tab-panel');
+        const mode  = btn.dataset.mode; // Gets the mode (friend or mutual)
+        const panel = btn.closest('.tab-panel'); // Finds what tab we're in
 
-        const usernames = Array.from(panel.querySelectorAll('.username-input'))
+        const usernames = Array.from(panel.querySelectorAll('.username-input')) // Creates a list of all input usernames
           .map(i => i.value.trim())
           .filter(v => v.length > 0);
 
@@ -220,14 +219,14 @@
       });
     });
 
+    // Clear the output //
     clearBtn.addEventListener('click', () => {
       resultsSection.style.display = 'none';
       errorSection.style.display   = 'none';
       loadingSection.style.display = 'none';
     });
 
-    /* ---------- API calls ---------- */
-
+    // Fetches mutual followers through custom API using input usernames //
     async function fetchMutualFollowers(usernames) {
       try {
         resultsSection.style.display = 'none';
@@ -252,6 +251,7 @@
       }
     }
 
+    // Fetches friends through custom API using input usernames //
     async function fetchFriends(usernames) {
       try {
         resultsSection.style.display = 'none';
