@@ -203,7 +203,7 @@
     document.querySelectorAll('.scan-btn').forEach(btn => {
       btn.addEventListener('click', async () => { // Listen for clicks on scan buttons (for all tabs)
         const mode  = btn.dataset.mode; // Gets the mode (friend or mutual)
-        const panel = btn.closest('.tab-panel'); // Finds what tab we're in
+        const panel = btn.closest('.tab-panel'); // Finds what tab we're in (for grabbing those users)
 
         const usernames = Array.from(panel.querySelectorAll('.username-input')) // Creates a list of all input usernames
           .map(i => i.value.trim())
@@ -251,8 +251,8 @@
       }
     }
 
-    // Fetches friends through custom API using input usernames //
-    async function fetchFriends(usernames) {
+    // Fetches friends through custom API using input username //
+    async function fetchFriends(username) {
       try {
         resultsSection.style.display = 'none';
         errorSection.style.display   = 'none';
@@ -261,15 +261,16 @@
         const res  = await fetch('/api/friends', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ usernames })
+          body:    JSON.stringify({ username })
         });
         const data = await res.json();
 
         if (!res.ok) throw new Error(data.error || 'Failed to fetch friends');
 
         loadingSection.style.display = 'none';
-        displayResults(data);
-        resultsSection.style.display = 'block';
+        showError(data.userId);
+        // displayResults(data);
+        // resultsSection.style.display = 'block';
       } catch (err) {
         loadingSection.style.display = 'none';
         showError(err.message);
