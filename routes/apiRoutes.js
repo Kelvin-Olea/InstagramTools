@@ -5,21 +5,21 @@ const InstagramService = require('../services/instagramService');
 function getErrorMessage(error) {
     const msg = error.message || '';
 
-    if (msg.includes('session')) {
-        return 'Authentication error: Instagram session ID is missing or expired. Please update INSTAGRAM_SESSION_ID in your .env file.';
-    }
-    if (msg.includes('Account is private')) {
-        return msg + ' — only public accounts can be checked.';
-    }
-    if (msg.includes('Could not find user')) {
-        return `Username not found or not accessible. Please verify the spelling and that the account is public.`;
-    }
-    if (msg.includes('Rate limit') || msg.includes('429')) {
-        return 'Instagram is rate limiting requests. Please wait a few minutes and try again.';
-    }
-    if (msg.includes('network') || msg.includes('Failed to fetch')) {
-        return 'Network error. Please check your internet connection and try again.';
-    }
+    // if (msg.includes('session')) {
+    //     return 'Authentication error: Instagram session ID is missing or expired. Please update INSTAGRAM_SESSION_ID in your .env file.';
+    // }
+    // if (msg.includes('Account is private')) {
+    //     return msg + ' — only public accounts can be checked.';
+    // }
+    // if (msg.includes('Could not find user')) {
+    //     return `Username not found or not accessible. Please verify the spelling and that the account is public.`;
+    // }
+    // if (msg.includes('Rate limit') || msg.includes('429')) {
+    //     return 'Instagram is rate limiting requests. Please wait a few minutes and try again.';
+    // }
+    // if (msg.includes('network') || msg.includes('Failed to fetch')) {
+    //     return 'Network error. Please check your internet connection and try again.';
+    // }
 
     return msg || 'An unexpected error occurred.';
 }
@@ -53,26 +53,21 @@ router.post('/api/mutual-followers', async (req, res) => {
 
 router.post('/api/friends', async (req, res) => {
     try {
-        const { usernames } = req.body;
+        const username = req.body.username?.[0]; // Pull the username out the requests body
 
-        if (!usernames || !Array.isArray(usernames) || usernames.length < 0) {
-            return res.status(400).json({ error: `Please provide at least 1 username, ${req}` });
-        }
-
-        const invalid = usernames.filter(u => !u || typeof u !== 'string' || u.trim().length === 0);
-        if (invalid.length > 0) {
+        if (typeof username !== 'string' || username.trim().length === 0) { // Filter out any invalid users (empty, not string, etc.)                                                         
             return res.status(400).json({ error: 'All usernames must be non-empty strings' });
         }
 
-        const friends = await InstagramService.getFriends(usernames);
-
-        mutualFollowers = friends;
+        const userId = await InstagramService.fetchUserId(username);
+        // const friends = await InstagramService.fetchUserId(username);
 
         res.json({
             success: true,
-            usernames,
-            mutualFollowers,
-            count: friends.length,
+            username,
+            userId
+            // friends,
+            // count: friends.length,
         });
     } catch (error) {
         console.error('Error fetching friends:', error);
