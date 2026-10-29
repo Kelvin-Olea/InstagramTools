@@ -3,42 +3,125 @@ require('dotenv').config();
 
 class InstagramService {
     constructor() {
-        this.baseUrl = 'https://i.instagram.com/api/v1';
+        this.baseUrl = 'https://www.instagram.com';
         this.cache = new Map();
+        this.currentTarget = {
+            'user' : '',
+            "id" : ''
+        }
 
         if (!process.env.INSTAGRAM_SESSION_ID) {
             console.warn('WARNING: INSTAGRAM_SESSION_ID is not set in .env');
+        } else if (!process.env.CSRF_TOKEN) {
+            console.warn('WARNING: CSRF_TOKEN is not set in .env');
+        } else if (!process.env.DS_USER_ID) {
+            console.warn('WARNING: DS_USER_ID is not set in .env');
+        } else if (!process.env.X_ASBD_ID) {
+            console.warn('WARNING: X_ASBD_ID is not set in .env');
         }
 
-        this.headers = {
-            'User-Agent': 'Instagram 76.0.0.15.395 Android (24/7.0; 380dpi; 1080x1920; OnePlus; ONEPLUS A3010; OnePlus3T; qcom; en_US; 138226743)',
+        this.baseHeaders = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
             'Accept': '*/*',
-            'Accept-Language': 'en-US',
+            'Accept-Language': 'en-US,en;q=0.9',
             'X-IG-App-ID': '936619743392459',
-            'Cookie': `sessionid=${process.env.INSTAGRAM_SESSION_ID};`,
+            'X-Requested-With': 'XMLHttpRequest',
+
+            'Sec-Ch-Ua-Platform': '"Linux"',
+            'Sec-Ch-Ua': '"Not)A;Brand";v="8", "Chromium";v="146"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Dest': 'empty',
+
+            'Cookie': `sessionid=${process.env.INSTAGRAM_SESSION_ID}; csrftoken=${process.env.CSRF_TOKEN}; ds_user_id=${process.env.DS_USER_ID}`,
+            'X-Csrftoken': `${process.env.CSRF_TOKEN}`,
+        };
+
+        if (process.env.X_ASBD_ID) this.baseHeaders['X-ASBD-ID'] = process.env.X_ASBD_ID;
+    }
+
+    getHeaders(){
+        return{
+            ...this.baseHeaders,
+            'Referer': `${this.baseUrl}/${this.currentTarget.user}/`
         };
     }
 
-    /**
-     * Get followers for a username
-     */
-    async getFollowing(username, limit = 10000) {
+    getUserIDHeaders(){
+        return {
+            'User-Agent': this.baseHeaders['User-Agent'],
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-User': '?1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Ch-Ua': this.baseHeaders['Sec-Ch-Ua'],
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Linux"',
+            'Cookie': this.baseHeaders['Cookie'],
+            'Referer': `${this.baseUrl}/`
+        };
+    }
+
+    // Scan through HTML text for a user's UserId //
+    parseHtmlForUserId(html){
+        const re = /"id":"(\d+)","is_aggregated_time_tracking_enabled":(?:true|false)[\s\S]{0,400}?"is_private":(true|false)/g;
+
+        // Full Match (m[0]) is the entire captured text
+        // Group 1 (m[1]) is the ID
+        // Group 2 (m[2]) is if the acc is private or not
+        for (const m of html.matchAll(re)) {
+            if (m[1] === String(process.env.DS_USER_ID)) continue; // skip your own account
+            return { id: m[1], isPrivate: m[2] === 'true' };
+        }
+        return null;
+    }
+
+    async fetchUserId(username) {
+        try {
+            const url = `${this.baseUrl}/${username}/`;
+            const response = await fetch(url, { headers: this.getUserIDHeaders()});
+
+            if (response.status === 404) return null;
+            if (response.status === 429) throw new Error('Rate limited (429). Wait a few minutes before retrying.');
+            if (response.status === 401) throw new Error('Invalid or expired Session ID. Please update INSTAGRAM_SESSION_ID in .env');
+            if (!response.ok) throw new Error(`Instagram returned status ${response.status}`);
+
+            // Check if the URL we're redirected to is the login page, authentication page, or directly challenged
+            if (/accounts\/login|auth_platform|challenge/.test(response.url)) {
+                throw new Error('Session invalid or challenged. Update cookies in .env');
+            }
+            const html = await response.text();
+
+            const userId = this.parseHtmlForUserId(html);
+            if (!userId) {throw new Error("Unable to find UserId")};
+
+            return userId.id; // Not using the isPrivate for now, still stored.
+            
+        } catch (error) {
+            if (error.message.includes('session')) throw error;
+            throw new Error(`Failed to fetch user info for ${username}: ${error.message}`);
+        }
+    }
+
+    // Get followers for a username //
+    async getFollowing(username) {
         const cacheKey = `following_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
         }
 
-        const user = {id : 58697722721, pk : 58697722721}; // Find a way to properly get instagram ID's
-        // const user = await this.fetchUserInfo(username);
+        const userId = await this.fetchUserId(username); // Find a way to properly get instagram ID's
 
-        // if (!user) {
-        //     throw new Error(`Could not find user: ${username}`);
-        // }
-        // if (user.is_private) {
-        //     throw new Error(`Account is private: ${username}`);
-        // }
+        if (!userId) {
+            throw new Error(`Could not find user: ${username}`);
+        }
+        // Add a way to ensure the user is either public, or someone we're following //
 
-        const following = await this.fetchFollowingList(user.pk || user.id, username, limit);
+        const following = await this.fetchFollowingList(userId, username);
         this.cache.set(cacheKey, following);
         return following;
     }
@@ -62,27 +145,6 @@ class InstagramService {
         const followers = await this.fetchFollowersList(user.pk || user.id, username, limit);
         this.cache.set(cacheKey, followers);
         return followers;
-    }
-
-
-    /**
-     * Fetch user info via web_profile_info endpoint
-     */
-    async fetchUserInfo(username) {
-        try {
-            const url = `${this.baseUrl}/users/web_profile_info/?username=${encodeURIComponent(username)}`;
-            const response = await fetch(url, { headers: this.headers });
-
-            if (response.status === 404) return null;
-            if (response.status === 401) throw new Error('Invalid or expired session ID. Please update INSTAGRAM_SESSION_ID in .env');
-            if (!response.ok) throw new Error(`Instagram returned status ${response.status}`);
-
-            const data = await response.json();
-            return data?.data?.user || null;
-        } catch (error) {
-            if (error.message.includes('session')) throw error;
-            throw new Error(`Failed to fetch user info for ${username}: ${error.message}`);
-        }
     }
 
     /**
