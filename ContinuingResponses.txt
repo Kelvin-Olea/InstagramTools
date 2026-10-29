@@ -1,0 +1,28 @@
+GET /api/v1/friendships/58697722721/followers/?count=12&max_id=12&search_surface=follow_list_page HTTP/2
+Host: www.instagram.com
+Cookie: datr=tz7iauy1e177PMPv23aPP0Za; ig_did=5A4F6B02-C7DC-44F5-92AA-9033D867F9AC; mid=auI-vQAEAAGboIJ8GL6CeKBD9Q5N; wd=921x1068; csrftoken=TVoXwXIdxfv64AeD6NNRwsD3BupUGC2d; ds_user_id=50764369275; sessionid=50764369275%3A3ifV2XAxtc6Ddw%3A7%3AAYkCfPrunZWuhuA_tUsymT9LPyMtBNpld--nlz5IpA; ps_l=1; ps_n=1; rur=SCU%2C17841450678265546%2C1794423474%3A01ffac79f7ede6ecc7cb5898aa84e3b6dd39d44dc6cc3e34240747e6ebd54aed29647d82
+Sec-Ch-Ua-Full-Version-List: 
+Sec-Ch-Ua-Platform: "Linux"
+Sec-Ch-Ua: "Not)A;Brand";v="8", "Chromium";v="138"
+Sec-Ch-Ua-Model: ""
+Sec-Ch-Ua-Mobile: ?0
+X-Ig-App-Id: 936619743392459
+X-Requested-With: XMLHttpRequest
+Accept: */*
+X-Csrftoken: TVoXwXIdxfv64AeD6NNRwsD3BupUGC2d
+X-Web-Session-Id: sj59w4:ufyrly:1enhcg
+Accept-Language: en-US,en;q=0.9
+X-Ig-Max-Touch-Points: 0
+X-Asbd-Id: 359341
+Sec-Ch-Prefers-Color-Scheme: dark
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36
+X-Ig-Www-Claim: hmac.AR1-fATjPkyeKiBBgPowg2HYhg0IPWRpW9ZVTaCq6flffQaU
+Sec-Ch-Ua-Platform-Version: ""
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://www.instagram.com/kailani.cann/
+Accept-Encoding: gzip, deflate, br
+Priority: u=1, i
+
+
