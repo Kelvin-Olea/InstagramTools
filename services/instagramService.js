@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const fs = require('fs');
 require('dotenv').config();
 
 class InstagramService {
@@ -67,15 +68,15 @@ class InstagramService {
     }
 
     // Scan through HTML text for a user's UserId //
-    parseHtmlForUserId(html){
-        const re = /"id":"(\d+)","is_aggregated_time_tracking_enabled":(?:true|false)[\s\S]{0,400}?"is_private":(true|false)/g;
+    async parseHtmlForUserId(html){
+        const re =  /"profile_id":"(\d+)"/g;
 
         // Full Match (m[0]) is the entire captured text
         // Group 1 (m[1]) is the ID
         // Group 2 (m[2]) is if the acc is private or not
         for (const m of html.matchAll(re)) {
             if (m[1] === String(process.env.DS_USER_ID)) continue; // skip your own account
-            return { id: m[1], isPrivate: m[2] === 'true' };
+            return { id: m[1] };
         }
         return null;
     }
@@ -84,7 +85,7 @@ class InstagramService {
         try {
             const url = `${this.baseUrl}/${username}/`;
             const response = await fetch(url, { headers: this.getUserIDHeaders()});
-
+                    
             if (response.status === 404) return null;
             if (response.status === 429) throw new Error('Rate limited (429). Wait a few minutes before retrying.');
             if (response.status === 401) throw new Error('Invalid or expired Session ID. Please update INSTAGRAM_SESSION_ID in .env');
@@ -95,11 +96,13 @@ class InstagramService {
                 throw new Error('Session invalid or challenged. Update cookies in .env');
             }
             const html = await response.text();
+            // const html = fs.readFileSync("output.txt", "utf8")
+            // fs.writeFileSync("output.txt", html)        
 
-            const userId = this.parseHtmlForUserId(html);
+            const userId = await this.parseHtmlForUserId(html);
             if (!userId) {throw new Error("Unable to find UserId")};
 
-            return userId.id; // Not using the isPrivate for now, still stored.
+            return userId.id;
             
         } catch (error) {
             if (error.message.includes('session')) throw error;
