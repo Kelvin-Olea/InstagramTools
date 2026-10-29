@@ -106,26 +106,22 @@ class InstagramService {
             throw new Error(`Failed to fetch user info for ${username}: ${error.message}`);
         }
     }
-    /**
-     * Get followers for a username
-     */
-    async getFollowing(username, limit = 10000) {
+
+    // Get followers for a username //
+    async getFollowing(username) {
         const cacheKey = `following_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
         }
 
-        const user = {id : 58697722721, pk : 58697722721}; // Find a way to properly get instagram ID's
-        // const user = await this.fetchUserInfo(username);
+        const userId = await this.fetchUserId(username); // Find a way to properly get instagram ID's
 
-        // if (!user) {
-        //     throw new Error(`Could not find user: ${username}`);
-        // }
-        // if (user.is_private) {
-        //     throw new Error(`Account is private: ${username}`);
-        // }
+        if (!userId) {
+            throw new Error(`Could not find user: ${username}`);
+        }
+        // Add a way to ensure the user is either public, or someone we're following //
 
-        const following = await this.fetchFollowingList(user.pk || user.id, username, limit);
+        const following = await this.fetchFollowingList(userId, username);
         this.cache.set(cacheKey, following);
         return following;
     }
