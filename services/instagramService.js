@@ -6,10 +6,6 @@ class InstagramService {
     constructor() {
         this.baseUrl = 'https://www.instagram.com';
         this.cache = new Map();
-        this.currentTarget = {
-            'user' : '',
-            "id" : ''
-        }
 
         if (!process.env.INSTAGRAM_SESSION_ID) {
             console.warn('WARNING: INSTAGRAM_SESSION_ID is not set in .env');
@@ -42,10 +38,10 @@ class InstagramService {
         if (process.env.X_ASBD_ID) this.baseHeaders['X-ASBD-ID'] = process.env.X_ASBD_ID;
     }
 
-    getHeaders(){
+    getHeaders(username){
         return{
             ...this.baseHeaders,
-            'Referer': `${this.baseUrl}/${this.currentTarget.user}/`
+            'Referer': `${this.baseUrl}/${username}/`
         };
     }
 
@@ -83,6 +79,11 @@ class InstagramService {
 
     async fetchUserId(username) {
         try {
+            const cacheKey = `userid_${username}`
+            if (this.cache.has(cacheKey)){
+                return this.cache.get(cacheKey);
+            }
+
             const url = `${this.baseUrl}/${username}/`;
             const response = await fetch(url, { headers: this.getUserIDHeaders()});
                     
@@ -101,7 +102,9 @@ class InstagramService {
 
             const userId = await this.parseHtmlForUserId(html);
             if (!userId) {throw new Error("Unable to find UserId")};
+            await this.delay(8000); // Force wait 8 seconds after sending any html request
 
+            this.cache.set(cacheKey, userId);
             return userId.id;
             
         } catch (error) {
@@ -110,22 +113,22 @@ class InstagramService {
         }
     }
 
-    // Get followers for a username //
-    async getFollowing(username) {
-        const cacheKey = `following_${username}`;
+    // Get who user is following //
+    async getFriends(username) {
+        const cacheKey = `friends_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
         }
 
-        const userId = await this.fetchUserId(username); // Find a way to properly get instagram ID's
+        const userId = await this.fetchUserId(username);
 
-        if (!userId) {
-            throw new Error(`Could not find user: ${username}`);
-        }
+        if (!userId) throw new Error(`Could not find user: ${username}`);
+        console.log(`UserID: ${userId}`);
+
         // Add a way to ensure the user is either public, or someone we're following //
 
         const following = await this.fetchFollowingList(userId, username);
-        this.cache.set(cacheKey, following);
+
         return following;
     }
 
@@ -153,109 +156,54 @@ class InstagramService {
     /**
      * Fetch paginated followers list via friendships endpoint
      */
-    async fetchFollowersList(userId, username, limit = 10000) {
+    async fetchFollowersList(userId, username) {
         const followers = [];
         let maxId = null;
         let hasMore = true;
 
-        while (hasMore && followers.length < limit) {
-            try {
-                const params = new URLSearchParams({ count: '50' });
-                if (maxId) params.set('max_id', maxId);
+        try {
+            const params = new URLSearchParams({ count: '50' });
 
-                const url = `${this.baseUrl}/friendships/${userId}/followers/?${params}`;
-                const response = await fetch(url, { headers: this.headers });
+            if (maxId) params.set('max_id', maxId);
+            
+            const url = `${this.baseUrl}/api/v1/friendships/${userId}/followers/?${params}`;
+            const headers = this.getHeaders(username)
 
-                if (response.status === 401) {
-                    throw new Error('Invalid or expired session ID. Please update INSTAGRAM_SESSION_ID in .env');
-                }
-                if (!response.ok) {
-                    console.warn(`Followers request failed with status ${response.status} for ${username}`);
-                    break;
-                }
+            const response = await fetch(url, { headers: headers });
 
-                const data = await response.json();
-                const users = data.users || [];
-
-                users.forEach(user => {
-                    if (user.username) {
-                        followers.push({
-                            username: user.username,
-                            id: user.pk,
-                            full_name: user.full_name || '',
-                            profile_pic_url: user.profile_pic_url || '',
-                        });
-                    }
-                });
-
-                // Pagination: Instagram uses next_max_id
-                hasMore = !!data.next_max_id && users.length > 0;
-                maxId = data.next_max_id || null;
-
-                // Respect rate limits
-                await this.delay(1500);
-            } catch (error) {
-                if (error.message.includes('session')) throw error;
-                console.warn(`Failed during followers pagination for ${username}: ${error.message}`);
-                break;
+            if (response.status === 401) {
+                throw new Error('Invalid or expired session ID. Please update INSTAGRAM_SESSION_ID in .env');
             }
+            if (!response.ok) {
+                throw new Error(`followers request failed with status ${response.status} for ${username}`);
+            }
+            
+            const data = await response.json();
+            const users = data.users || [];
+            users.forEach(user => {
+                if (user.username) {
+                    followers.push({
+                        username: user.username,
+                        id: user.pk,
+                        full_name: user.full_name || '',
+                        profile_pic_url: user.profile_pic_url || '',
+                    });
+                }
+            });
+            // Pagination: Instagram uses next_max_id
+            hasMore = !!data.next_max_id && users.length > 0;
+            maxId = data.next_max_id || null;
+            // Respect rate limits
+
+            fs.writeFileSync('output.txt', JSON.stringify(followers))
+
+            await this.delay(10000);
+        } catch (error) {
+            if (error.message.includes('session')) throw error;
+            console.warn(`Failed during followers pagination for ${username}: ${error.message}`);
         }
 
         return followers;
-    }
-
-        /**
-     * Fetch paginated followers list via friendships endpoint
-     */
-    async fetchFollowingList(userId, username, limit = 10000) {
-        const following = [];
-        let maxId = null;
-        let hasMore = true;
-
-        while (hasMore && following.length < limit) {
-            try {
-                const params = new URLSearchParams({ count: '50' });
-                if (maxId) params.set('max_id', maxId);
-
-                const url = `${this.baseUrl}/friendships/${userId}/following/?${params}`;
-                const response = await fetch(url, { headers: this.headers });
-
-                if (response.status === 401) {
-                    throw new Error('Invalid or expired session ID. Please update INSTAGRAM_SESSION_ID in .env');
-                }
-                if (!response.ok) {
-                    console.warn(`following request failed with status ${response.status} for ${username}`);
-                    break;
-                }
-
-                const data = await response.json();
-                const users = data.users || [];
-
-                users.forEach(user => {
-                    if (user.username) {
-                        following.push({
-                            username: user.username,
-                            id: user.pk,
-                            full_name: user.full_name || '',
-                            profile_pic_url: user.profile_pic_url || '',
-                        });
-                    }
-                });
-
-                // Pagination: Instagram uses next_max_id
-                hasMore = !!data.next_max_id && users.length > 0;
-                maxId = data.next_max_id || null;
-
-                // Respect rate limits
-                await this.delay(1500);
-            } catch (error) {
-                if (error.message.includes('session')) throw error;
-                console.warn(`Failed during following pagination for ${username}: ${error.message}`);
-                break;
-            }
-        }
-
-        return following;
     }
 
     /**
