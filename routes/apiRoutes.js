@@ -59,15 +59,14 @@ router.post('/api/friends', async (req, res) => {
             return res.status(400).json({ error: 'All usernames must be non-empty strings' });
         }
 
-        const userId = await InstagramService.fetchUserId(username);
+        const followers = await InstagramService.getFriends(username);
         // const friends = await InstagramService.fetchUserId(username);
 
         res.json({
             success: true,
             username,
-            userId
-            // friends,
-            // count: friends.length,
+            followers,
+            count: followers.length,
         });
     } catch (error) {
         console.error('Error fetching friends:', error);
