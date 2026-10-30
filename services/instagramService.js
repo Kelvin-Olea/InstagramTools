@@ -104,7 +104,7 @@ class InstagramService {
             if (!userId) {throw new Error("Unable to find UserId")};
             await this.delay(8000); // Force wait 8 seconds after sending any html request
 
-            this.cache.set(cacheKey, userId);
+            this.cache.set(cacheKey, userId.id);
             return userId.id;
             
         } catch (error) {
@@ -113,8 +113,8 @@ class InstagramService {
         }
     }
 
-    // Get who user is following //
-    async getFriends(username) {
+    // Get who user is friends with //
+    async getFollowers(username) {
         const cacheKey = `friends_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
@@ -123,33 +123,11 @@ class InstagramService {
         const userId = await this.fetchUserId(username);
 
         if (!userId) throw new Error(`Could not find user: ${username}`);
-        console.log(`UserID: ${userId}`);
 
         // Add a way to ensure the user is either public, or someone we're following //
 
-        const following = await this.fetchFollowingList(userId, username);
+        const followers = await this.fetchFollowersList(userId, username);
 
-        return following;
-    }
-
-    async getFollowers(username, limit = 10000) {
-        const cacheKey = `followers_${username}`;
-        if (this.cache.has(cacheKey)) {
-            return this.cache.get(cacheKey);
-        }
-
-        const user = {id : 58697722721, pk : 58697722721};
-        // const user = await this.fetchUserInfo(username);
-
-        if (!user) {
-            throw new Error(`Could not find user: ${username}`);
-        }
-        if (user.is_private) {
-            throw new Error(`Account is private: ${username}`);
-        }
-
-        const followers = await this.fetchFollowersList(user.pk || user.id, username, limit);
-        this.cache.set(cacheKey, followers);
         return followers;
     }
 
@@ -197,10 +175,10 @@ class InstagramService {
 
             fs.writeFileSync('output.txt', JSON.stringify(followers))
 
-            await this.delay(10000);
+            // await this.delay(10000);
         } catch (error) {
             if (error.message.includes('session')) throw error;
-            console.warn(`Failed during followers pagination for ${username}: ${error.message}`);
+            throw error(`Failed during followers pagination for ${username}: ${error.message}`)
         }
 
         return followers;
@@ -244,17 +222,17 @@ class InstagramService {
         return this.findIntersection(allFollowerSets);
     }
 
-    async getFriends(username) {
-        username = username[0];
-        if (!username) {
-            throw new Error('Please provide a username!');
-        }
+    // async getFriends(username) {
+    //     username = username[0];
+    //     if (!username) {
+    //         throw new Error('Please provide a username!');
+    //     }
 
-        const followers = await this.getFollowers(username);
-        const following = await this.getFollowing(username);
+    //     const followers = await this.getFollowers(username);
+    //     const following = await this.getFollowing(username);
 
-        return this.findIntersection([followers, following]);
-    }
+    //     return this.findIntersection([followers, following]);
+    // }
 
     /**
      * Find intersection of multiple follower arrays by username
