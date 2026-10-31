@@ -5,7 +5,9 @@ require('dotenv').config();
 class InstagramService {
     constructor() {
         this.baseUrl = 'https://www.instagram.com';
+        this.cacheFile = 'cache.json';
         this.cache = new Map();
+        this.loadCache();
 
         if (!process.env.INSTAGRAM_SESSION_ID) {
             console.warn('WARNING: INSTAGRAM_SESSION_ID is not set in .env');
@@ -18,7 +20,7 @@ class InstagramService {
         }
 
         this.baseHeaders = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
             'Accept': '*/*',
             'Accept-Language': 'en-US,en;q=0.9',
             'X-IG-App-ID': '936619743392459',
@@ -105,6 +107,8 @@ class InstagramService {
             await this.delay(8000); // Force wait 8 seconds after sending any html request
 
             this.cache.set(cacheKey, userId.id);
+            this.saveCache();
+
             return userId.id;
             
         } catch (error) {
@@ -114,7 +118,7 @@ class InstagramService {
     }
 
     // Get who user is friends with //
-    async getFollowers(username) {
+    async getFriends(username) {
         const cacheKey = `friends_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
@@ -127,19 +131,29 @@ class InstagramService {
         // Add a way to ensure the user is either public, or someone we're following //
 
         const followers = await this.fetchFollowersList(userId, username);
+        await this.delay(this.randomBetween(8000, 12000))
+        const following = await this.fetchFollowingList(userId, username);
 
-        return followers;
+        const friends = await this.findIntersection([followers, following]);
+        
+        this.cache.set(cacheKey, friends);
+        this.saveCache();
+
+        return friends;
     }
 
-    /**
-     * Fetch paginated followers list via friendships endpoint
-     */
+    // Fetch paginated followers list via friendships endpoint //
     async fetchFollowersList(userId, username) {
+        const cacheKey = `followers_${username}`;
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
+        }
+
         const followers = [];
         let maxId = null;
         let hasMore = true;
 
-        try{
+        // try{
             while (hasMore){
                 const params = new URLSearchParams({ count: '20' });
 
@@ -179,66 +193,73 @@ class InstagramService {
                 if (hasMore) await this.delay(this.randomBetween(8000, 12000));
 
             } 
-        } finally {
-            fs.writeFileSync('output.txt', JSON.stringify(followers))
-        }
+        // } 
+
+        this.cache.set(cacheKey, followers);
+        this.saveCache();
 
         return followers;
     }
 
-    /**
-     * Get profile information for a username
-     */
-    async getProfileInfo(username) {
-        const user = await this.fetchUserInfo(username);
-
-        if (!user) {
-            throw new Error(`Could not find user: ${username}`);
+    // Fetch paginated following list via friendships endpoint //
+    async fetchFollowingList(userId, username) {
+        const cacheKey = `following_${username}`;
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
         }
 
-        return {
-            username: user.username,
-            full_name: user.full_name || '',
-            biography: user.biography || '',
-            followers_count: user.edge_followed_by?.count ?? user.follower_count ?? 0,
-            following_count: user.edge_follow?.count ?? user.following_count ?? 0,
-            is_private: user.is_private || false,
-            is_verified: user.is_verified || false,
-            profile_pic_url: user.profile_pic_url_hd || user.profile_pic_url || '',
-            posts_count: user.edge_owner_to_timeline_media?.count ?? user.media_count ?? 0,
-        };
+        const following = [];
+        let maxId = null;
+        let hasMore = true;
+
+        // try{
+            while (hasMore){
+                const params = new URLSearchParams({ count: '20' });
+
+                if (maxId) params.set('max_id', maxId);
+                
+                const url = `${this.baseUrl}/api/v1/friendships/${userId}/following/?${params}`;
+                const headers = this.getHeaders(username)
+
+                const response = await fetch(url, { headers: headers });
+
+                if (response.status === 401) {
+                    throw new Error('Invalid or expired session ID. Please update INSTAGRAM_SESSION_ID in .env');
+                }
+                if (!response.ok) {
+                    throw new Error(`following request failed with status ${response.status} for ${username}`);
+                }
+                
+                const data = await response.json();
+                const users = data.users || [];
+                users.forEach(user => {
+                    if (user.username) {
+                        following.push({
+                            username: user.username,
+                            id: user.pk,
+                            full_name: user.full_name || '',
+                            profile_pic_url: user.profile_pic_url || '',
+                        });
+                    }
+                });
+                // Pagination: Instagram uses next_max_id
+                hasMore = !!data.next_max_id && users.length > 0;
+                maxId = data.next_max_id || null;
+                // Respect rate limits
+
+                console.log(maxId);
+
+                if (hasMore) await this.delay(this.randomBetween(8000, 12000));
+
+            } 
+        // } 
+
+        this.cache.set(cacheKey, following);
+        this.saveCache();
+
+        return following;
     }
 
-    /**
-     * Get mutual followers between 2 or more accounts
-     */
-    async getMutualFollowers(usernames) {
-        if (!usernames || usernames.length < 2) {
-            throw new Error('Please provide at least 2 usernames');
-        }
-
-        const allFollowerSets = await Promise.all(
-            usernames.map(username => this.getFollowers(username))
-        );
-
-        return this.findIntersection(allFollowerSets);
-    }
-
-    // async getFriends(username) {
-    //     username = username[0];
-    //     if (!username) {
-    //         throw new Error('Please provide a username!');
-    //     }
-
-    //     const followers = await this.getFollowers(username);
-    //     const following = await this.getFollowing(username);
-
-    //     return this.findIntersection([followers, following]);
-    // }
-
-    /**
-     * Find intersection of multiple follower arrays by username
-     */
     findIntersection(followerArrays) {
         if (followerArrays.length === 0) return [];
         if (followerArrays.length === 1) return followerArrays[0];
@@ -262,6 +283,21 @@ class InstagramService {
 
     randomBetween(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    loadCache() {
+        try {
+            const entries = JSON.parse(fs.readFileSync(this.cacheFile, 'utf8'));
+            this.cache = new Map(entries);
+        } catch (err) {
+            if (err.code !== 'ENOENT') console.warn(`Could not load cache: ${err.message}`); // ENOENT = first run, no file yet
+        }
+    }
+
+    saveCache() {
+        const tmp = `${this.cacheFile}.tmp`;
+        fs.writeFileSync(tmp, JSON.stringify([...this.cache]));
+        fs.renameSync(tmp, this.cacheFile); // write-then-rename so a crash mid-write can't corrupt the file
     }
 }
 

@@ -25,6 +25,8 @@
       </div>
       <h1>Instagram<br>Tools</h1>
       <p class="tagline">Tools used to easily sort through users following/followers lists</p>
+      <img src="https://scontent-bos5-1.cdninstagram.com/v/t51.82787-19/565319903_18044001026689276_2096394635539816788_n.jpg?stp=dst-jpg_s150x150_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=scontent-bos5-1.cdninstagram.com&_nc_cat=104&_nc_oc=Q6cZ2gH6IWqjZnsO-_dzEaOANiJ9D3ZSM56epb99pYB3FoX5AeuoUJ-5EhbAtMNeOB04-Ro&_nc_ohc=oGRhSXLo18UQ7kNvwHmlWjM&_nc_gid=wNbJR2xEMwZ9VdmXb0czZA&edm=APQMUHMBAAAA&ccb=7-5&oh=00_AQQadXxwoYQKBS_jkz87zl3bzQTq6Djs9duVht9TsdcksQ&oe=6AEBFE83&_nc_sid=6ff7c8" 
+            alt="Kelvin Olea" referrerpolicy="no-referrer"/>
     </header>
 
     <main class="container">
@@ -202,6 +204,9 @@
     // Run the scan //
     document.querySelectorAll('.scan-btn').forEach(btn => {
       btn.addEventListener('click', async () => { // Listen for clicks on scan buttons (for all tabs)
+        btn.disabled = true;
+        btn.textContent = "Scanning...";
+
         const mode  = btn.dataset.mode; // Gets the mode (friend or mutual)
         const panel = btn.closest('.tab-panel'); // Finds what tab we're in (for grabbing those users)
 
@@ -248,6 +253,9 @@
       } catch (err) {
         loadingSection.style.display = 'none';
         showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Run Scan"
       }
     }
 
@@ -273,14 +281,24 @@
       } catch (err) {
         loadingSection.style.display = 'none';
         showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Run Scan"
       }
     }
 
     /* ---------- Rendering ---------- */
 
     function displayResults(data) {
-      document.getElementById('accounts-count').textContent = data.usernames.length;
-      document.getElementById('mutual-count').textContent   = data.count;
+
+      if (typeof data.usernames == "string"){
+        document.getElementById('accounts-count').textContent = 1;
+      } else{
+        document.getElementById('accounts-count').textContent = data.usernames.length;
+      }
+
+      document.getElementById('mutual-count').textContent = data.count;
+
       followersList.innerHTML = '';
 
       if (!data.followers.length) {
