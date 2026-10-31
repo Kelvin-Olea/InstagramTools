@@ -53,18 +53,18 @@ router.post('/api/mutual-followers', async (req, res) => {
 
 router.post('/api/friends', async (req, res) => {
     try {
-        const username = req.body.username?.[0]; // Pull the username out the requests body
+        const usernames = req.body.username?.[0]; // Pull the username out the requests body
 
-        if (typeof username !== 'string' || username.trim().length === 0) { // Filter out any invalid users (empty, not string, etc.)                                                         
+        if (typeof usernames !== 'string' || usernames.trim().length === 0) { // Filter out any invalid users (empty, not string, etc.)                                                         
             return res.status(400).json({ error: 'All usernames must be non-empty strings' });
         }
 
-        const followers = await InstagramService.getFollowers(username);
+        const followers = await InstagramService.getFollowers(usernames);
         // const friends = await InstagramService.fetchUserId(username);
 
         res.json({
             success: true,
-            username,
+            usernames,
             followers,
             count: followers.length,
         });

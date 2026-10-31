@@ -139,46 +139,48 @@ class InstagramService {
         let maxId = null;
         let hasMore = true;
 
-        try {
-            const params = new URLSearchParams({ count: '50' });
+        try{
+            while (hasMore){
+                const params = new URLSearchParams({ count: '20' });
 
-            if (maxId) params.set('max_id', maxId);
-            
-            const url = `${this.baseUrl}/api/v1/friendships/${userId}/followers/?${params}`;
-            const headers = this.getHeaders(username)
+                if (maxId) params.set('max_id', maxId);
+                
+                const url = `${this.baseUrl}/api/v1/friendships/${userId}/followers/?${params}`;
+                const headers = this.getHeaders(username)
 
-            const response = await fetch(url, { headers: headers });
+                const response = await fetch(url, { headers: headers });
 
-            if (response.status === 401) {
-                throw new Error('Invalid or expired session ID. Please update INSTAGRAM_SESSION_ID in .env');
-            }
-            if (!response.ok) {
-                throw new Error(`followers request failed with status ${response.status} for ${username}`);
-            }
-            
-            const data = await response.json();
-            const users = data.users || [];
-            users.forEach(user => {
-                if (user.username) {
-                    followers.push({
-                        username: user.username,
-                        id: user.pk,
-                        full_name: user.full_name || '',
-                        profile_pic_url: user.profile_pic_url || '',
-                    });
+                if (response.status === 401) {
+                    throw new Error('Invalid or expired session ID. Please update INSTAGRAM_SESSION_ID in .env');
                 }
-            });
-            // Pagination: Instagram uses next_max_id
-            hasMore = !!data.next_max_id && users.length > 0;
-            maxId = data.next_max_id || null;
-            // Respect rate limits
+                if (!response.ok) {
+                    throw new Error(`followers request failed with status ${response.status} for ${username}`);
+                }
+                
+                const data = await response.json();
+                const users = data.users || [];
+                users.forEach(user => {
+                    if (user.username) {
+                        followers.push({
+                            username: user.username,
+                            id: user.pk,
+                            full_name: user.full_name || '',
+                            profile_pic_url: user.profile_pic_url || '',
+                        });
+                    }
+                });
+                // Pagination: Instagram uses next_max_id
+                hasMore = !!data.next_max_id && users.length > 0;
+                maxId = data.next_max_id || null;
+                // Respect rate limits
 
+                console.log(maxId);
+
+                if (hasMore) await this.delay(this.randomBetween(8000, 12000));
+
+            } 
+        } finally {
             fs.writeFileSync('output.txt', JSON.stringify(followers))
-
-            // await this.delay(10000);
-        } catch (error) {
-            if (error.message.includes('session')) throw error;
-            throw error(`Failed during followers pagination for ${username}: ${error.message}`)
         }
 
         return followers;
@@ -256,6 +258,10 @@ class InstagramService {
 
     clearCache() {
         this.cache.clear();
+    }
+
+    randomBetween(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 }
 

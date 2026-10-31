@@ -268,9 +268,8 @@
         if (!res.ok) throw new Error(data.error || 'Failed to fetch friends');
 
         loadingSection.style.display = 'none';
-        showError(data.userId);
-        // displayResults(data);
-        // resultsSection.style.display = 'block';
+        displayResults(data);
+        resultsSection.style.display = 'block';
       } catch (err) {
         loadingSection.style.display = 'none';
         showError(err.message);
@@ -284,12 +283,12 @@
       document.getElementById('mutual-count').textContent   = data.count;
       followersList.innerHTML = '';
 
-      if (!data.mutualFollowers.length) {
+      if (!data.followers.length) {
         followersList.innerHTML = '<p class="no-results">No mutual followers found across these accounts.</p>';
         return;
       }
 
-      data.mutualFollowers.forEach((follower, i) => {
+      data.followers.forEach((follower, i) => {
         const card = document.createElement('div');
         card.className = 'follower-card';
         card.style.animationDelay = `${i * 35}ms`;
