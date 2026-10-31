@@ -202,6 +202,9 @@
     // Run the scan //
     document.querySelectorAll('.scan-btn').forEach(btn => {
       btn.addEventListener('click', async () => { // Listen for clicks on scan buttons (for all tabs)
+        btn.disabled = true;
+        btn.textContent = "Scanning...";
+
         const mode  = btn.dataset.mode; // Gets the mode (friend or mutual)
         const panel = btn.closest('.tab-panel'); // Finds what tab we're in (for grabbing those users)
 
@@ -227,29 +230,34 @@
     });
 
     // Fetches mutual followers through custom API using input usernames //
-    async function fetchMutualFollowers(usernames) {
-      try {
-        resultsSection.style.display = 'none';
-        errorSection.style.display   = 'none';
-        loadingSection.style.display = 'flex';
+    // async function fetchMutualFollowers(usernames) {
+    //   try {
+    //     resultsSection.style.display = 'none';
+    //     errorSection.style.display   = 'none';
+    //     loadingSection.style.display = 'flex';
 
-        const res  = await fetch('/api/mutual-followers', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ usernames })
-        });
-        const data = await res.json();
+    //     const res  = await fetch('/api/mutual-followers', {
+    //       method:  'POST',
+    //       headers: { 'Content-Type': 'application/json' },
+    //       body:    JSON.stringify({ usernames })
+    //     });
+    //     const data = await res.json();
 
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch mutual followers');
+    //     if (!res.ok) throw new Error(data.error || 'Failed to fetch mutual followers');
 
-        loadingSection.style.display = 'none';
-        displayResults(data);
-        resultsSection.style.display = 'block';
-      } catch (err) {
-        loadingSection.style.display = 'none';
-        showError(err.message);
-      }
-    }
+    //     loadingSection.style.display = 'none';
+    //     displayResults(data);
+    //     resultsSection.style.display = 'block';
+    //   } catch (err) {
+    //     loadingSection.style.display = 'none';
+    //     showError(err.message);
+    //   } finally {
+    //     document.querySelectorAll('.scan-btn').forEach(btn => {
+    //       btn.disabled = false;
+    //       btn.textContent = "Run Scan"
+    //     }
+    //   }
+    // }
 
     // Fetches friends through custom API using input username //
     async function fetchFriends(username) {
@@ -268,28 +276,39 @@
         if (!res.ok) throw new Error(data.error || 'Failed to fetch friends');
 
         loadingSection.style.display = 'none';
-        showError(data.userId);
-        // displayResults(data);
-        // resultsSection.style.display = 'block';
+        displayResults(data);
+        resultsSection.style.display = 'block';
       } catch (err) {
         loadingSection.style.display = 'none';
         showError(err.message);
+      } finally {
+        document.querySelectorAll('.scan-btn').forEach(btn => {
+          btn.disabled = false;
+          btn.textContent = "Run Scan";
+        })
       }
     }
 
     /* ---------- Rendering ---------- */
 
     function displayResults(data) {
-      document.getElementById('accounts-count').textContent = data.usernames.length;
-      document.getElementById('mutual-count').textContent   = data.count;
+
+      if (typeof data.usernames == "string"){
+        document.getElementById('accounts-count').textContent = 1;
+      } else{
+        document.getElementById('accounts-count').textContent = data.usernames.length;
+      }
+
+      document.getElementById('mutual-count').textContent = data.count;
+
       followersList.innerHTML = '';
 
-      if (!data.mutualFollowers.length) {
+      if (!data.usersList.length) {
         followersList.innerHTML = '<p class="no-results">No mutual followers found across these accounts.</p>';
         return;
       }
 
-      data.mutualFollowers.forEach((follower, i) => {
+      data.usersList.forEach((follower, i) => {
         const card = document.createElement('div');
         card.className = 'follower-card';
         card.style.animationDelay = `${i * 35}ms`;
