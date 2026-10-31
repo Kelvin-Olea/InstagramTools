@@ -2,6 +2,10 @@
 
 A Node.js/Express web application that allows for filtering between multiple users followers/following lists.
 
+## ❗WARNING❗
+
+Using this tool risks getting your account **banned**. Use at your own risk.
+
 ## Features
 
 - ✅ Check mutual followers between multiple Instagram accounts
