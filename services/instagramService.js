@@ -135,7 +135,7 @@ class InstagramService {
         const following = await this.fetchFollowingList(userId, username);
 
         const friends = await this.findIntersection([followers, following]);
-        
+
         this.cache.set(cacheKey, friends);
         this.saveCache();
 
@@ -279,6 +279,7 @@ class InstagramService {
 
     clearCache() {
         this.cache.clear();
+        this.saveCache();
     }
 
     randomBetween(min, max) {
@@ -295,9 +296,13 @@ class InstagramService {
     }
 
     saveCache() {
-        const tmp = `${this.cacheFile}.tmp`;
-        fs.writeFileSync(tmp, JSON.stringify([...this.cache]));
-        fs.renameSync(tmp, this.cacheFile); // write-then-rename so a crash mid-write can't corrupt the file
+        try {
+            const tmp = `${this.cacheFile}.tmp`;
+            fs.writeFileSync(tmp, JSON.stringify([...this.cache]));
+            fs.renameSync(tmp, this.cacheFile);
+        } catch (err) {
+            console.warn(`Could not save cache: ${err.message}`);
+        }
     }
 }
 
