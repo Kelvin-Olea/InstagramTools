@@ -5,11 +5,9 @@ require('dotenv').config();
 class InstagramService {
     constructor() {
         this.baseUrl = 'https://www.instagram.com';
+        this.cacheFile = 'cache.json';
         this.cache = new Map();
-        this.currentTarget = {
-            'user' : '',
-            "id" : ''
-        }
+        this.loadCache();
 
         if (!process.env.INSTAGRAM_SESSION_ID) {
             console.warn('WARNING: INSTAGRAM_SESSION_ID is not set in .env');
@@ -22,7 +20,7 @@ class InstagramService {
         }
 
         this.baseHeaders = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
             'Accept': '*/*',
             'Accept-Language': 'en-US,en;q=0.9',
             'X-IG-App-ID': '936619743392459',
@@ -42,10 +40,10 @@ class InstagramService {
         if (process.env.X_ASBD_ID) this.baseHeaders['X-ASBD-ID'] = process.env.X_ASBD_ID;
     }
 
-    getHeaders(){
+    getHeaders(username){
         return{
             ...this.baseHeaders,
-            'Referer': `${this.baseUrl}/${this.currentTarget.user}/`
+            'Referer': `${this.baseUrl}/${username}/`
         };
     }
 
@@ -83,6 +81,11 @@ class InstagramService {
 
     async fetchUserId(username) {
         try {
+            const cacheKey = `userid_${username}`
+            if (this.cache.has(cacheKey)){
+                return this.cache.get(cacheKey);
+            }
+
             const url = `${this.baseUrl}/${username}/`;
             const response = await fetch(url, { headers: this.getUserIDHeaders()});
                     
@@ -101,6 +104,10 @@ class InstagramService {
 
             const userId = await this.parseHtmlForUserId(html);
             if (!userId) {throw new Error("Unable to find UserId")};
+            await this.delay(8000); // Force wait 8 seconds after sending any html request
+
+            this.cache.set(cacheKey, userId.id);
+            this.saveCache();
 
             return userId.id;
             
@@ -110,73 +117,62 @@ class InstagramService {
         }
     }
 
-    // Get followers for a username //
-    async getFollowing(username) {
-        const cacheKey = `following_${username}`;
+    // Get who user is friends with //
+    async getFriends(username) {
+        const cacheKey = `friends_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
         }
 
-        const userId = await this.fetchUserId(username); // Find a way to properly get instagram ID's
+        const userId = await this.fetchUserId(username);
 
-        if (!userId) {
-            throw new Error(`Could not find user: ${username}`);
-        }
+        if (!userId) throw new Error(`Could not find user: ${username}`);
+
         // Add a way to ensure the user is either public, or someone we're following //
 
+        const followers = await this.fetchFollowersList(userId, username);
+        await this.delay(this.randomBetween(8000, 12000))
         const following = await this.fetchFollowingList(userId, username);
-        this.cache.set(cacheKey, following);
-        return following;
+
+        const friends = await this.findIntersection([followers, following]);
+
+        this.cache.set(cacheKey, friends);
+        this.saveCache();
+
+        return friends;
     }
 
-    async getFollowers(username, limit = 10000) {
+    // Fetch paginated followers list via friendships endpoint //
+    async fetchFollowersList(userId, username) {
         const cacheKey = `followers_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
         }
 
-        const user = {id : 58697722721, pk : 58697722721};
-        // const user = await this.fetchUserInfo(username);
-
-        if (!user) {
-            throw new Error(`Could not find user: ${username}`);
-        }
-        if (user.is_private) {
-            throw new Error(`Account is private: ${username}`);
-        }
-
-        const followers = await this.fetchFollowersList(user.pk || user.id, username, limit);
-        this.cache.set(cacheKey, followers);
-        return followers;
-    }
-
-    /**
-     * Fetch paginated followers list via friendships endpoint
-     */
-    async fetchFollowersList(userId, username, limit = 10000) {
         const followers = [];
         let maxId = null;
         let hasMore = true;
 
-        while (hasMore && followers.length < limit) {
-            try {
-                const params = new URLSearchParams({ count: '50' });
-                if (maxId) params.set('max_id', maxId);
+        // try{
+            while (hasMore){
+                const params = new URLSearchParams({ count: '20' });
 
-                const url = `${this.baseUrl}/friendships/${userId}/followers/?${params}`;
-                const response = await fetch(url, { headers: this.headers });
+                if (maxId) params.set('max_id', maxId);
+                
+                const url = `${this.baseUrl}/api/v1/friendships/${userId}/followers/?${params}`;
+                const headers = this.getHeaders(username)
+
+                const response = await fetch(url, { headers: headers });
 
                 if (response.status === 401) {
                     throw new Error('Invalid or expired session ID. Please update INSTAGRAM_SESSION_ID in .env');
                 }
                 if (!response.ok) {
-                    console.warn(`Followers request failed with status ${response.status} for ${username}`);
-                    break;
+                    throw new Error(`followers request failed with status ${response.status} for ${username}`);
                 }
-
+                
                 const data = await response.json();
                 const users = data.users || [];
-
                 users.forEach(user => {
                     if (user.username) {
                         followers.push({
@@ -187,50 +183,55 @@ class InstagramService {
                         });
                     }
                 });
-
                 // Pagination: Instagram uses next_max_id
                 hasMore = !!data.next_max_id && users.length > 0;
                 maxId = data.next_max_id || null;
-
                 // Respect rate limits
-                await this.delay(1500);
-            } catch (error) {
-                if (error.message.includes('session')) throw error;
-                console.warn(`Failed during followers pagination for ${username}: ${error.message}`);
-                break;
-            }
-        }
+
+                console.log(maxId);
+
+                if (hasMore) await this.delay(this.randomBetween(8000, 12000));
+
+            } 
+        // } 
+
+        this.cache.set(cacheKey, followers);
+        this.saveCache();
 
         return followers;
     }
 
-        /**
-     * Fetch paginated followers list via friendships endpoint
-     */
-    async fetchFollowingList(userId, username, limit = 10000) {
+    // Fetch paginated following list via friendships endpoint //
+    async fetchFollowingList(userId, username) {
+        const cacheKey = `following_${username}`;
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
+        }
+
         const following = [];
         let maxId = null;
         let hasMore = true;
 
-        while (hasMore && following.length < limit) {
-            try {
-                const params = new URLSearchParams({ count: '50' });
-                if (maxId) params.set('max_id', maxId);
+        // try{
+            while (hasMore){
+                const params = new URLSearchParams({ count: '20' });
 
-                const url = `${this.baseUrl}/friendships/${userId}/following/?${params}`;
-                const response = await fetch(url, { headers: this.headers });
+                if (maxId) params.set('max_id', maxId);
+                
+                const url = `${this.baseUrl}/api/v1/friendships/${userId}/following/?${params}`;
+                const headers = this.getHeaders(username)
+
+                const response = await fetch(url, { headers: headers });
 
                 if (response.status === 401) {
                     throw new Error('Invalid or expired session ID. Please update INSTAGRAM_SESSION_ID in .env');
                 }
                 if (!response.ok) {
-                    console.warn(`following request failed with status ${response.status} for ${username}`);
-                    break;
+                    throw new Error(`following request failed with status ${response.status} for ${username}`);
                 }
-
+                
                 const data = await response.json();
                 const users = data.users || [];
-
                 users.forEach(user => {
                     if (user.username) {
                         following.push({
@@ -241,76 +242,24 @@ class InstagramService {
                         });
                     }
                 });
-
                 // Pagination: Instagram uses next_max_id
                 hasMore = !!data.next_max_id && users.length > 0;
                 maxId = data.next_max_id || null;
-
                 // Respect rate limits
-                await this.delay(1500);
-            } catch (error) {
-                if (error.message.includes('session')) throw error;
-                console.warn(`Failed during following pagination for ${username}: ${error.message}`);
-                break;
-            }
-        }
+
+                console.log(maxId);
+
+                if (hasMore) await this.delay(this.randomBetween(8000, 12000));
+
+            } 
+        // } 
+
+        this.cache.set(cacheKey, following);
+        this.saveCache();
 
         return following;
     }
 
-    /**
-     * Get profile information for a username
-     */
-    async getProfileInfo(username) {
-        const user = await this.fetchUserInfo(username);
-
-        if (!user) {
-            throw new Error(`Could not find user: ${username}`);
-        }
-
-        return {
-            username: user.username,
-            full_name: user.full_name || '',
-            biography: user.biography || '',
-            followers_count: user.edge_followed_by?.count ?? user.follower_count ?? 0,
-            following_count: user.edge_follow?.count ?? user.following_count ?? 0,
-            is_private: user.is_private || false,
-            is_verified: user.is_verified || false,
-            profile_pic_url: user.profile_pic_url_hd || user.profile_pic_url || '',
-            posts_count: user.edge_owner_to_timeline_media?.count ?? user.media_count ?? 0,
-        };
-    }
-
-    /**
-     * Get mutual followers between 2 or more accounts
-     */
-    async getMutualFollowers(usernames) {
-        if (!usernames || usernames.length < 2) {
-            throw new Error('Please provide at least 2 usernames');
-        }
-
-        const allFollowerSets = await Promise.all(
-            usernames.map(username => this.getFollowers(username))
-        );
-
-        return this.findIntersection(allFollowerSets);
-    }
-
-    async getFriends(username) {
-        username = username[0];
-        if (!username) {
-            throw new Error('Please provide a username!');
-        }
-
-        const followers = await this.getFollowers(username);
-        const following = await this.getFollowing(username);
-
-        return this.findIntersection([followers, following]);
-    }
-
-    /**
-     * Find intersection of multiple follower arrays by username
-     */
     findIntersection(followerArrays) {
         if (followerArrays.length === 0) return [];
         if (followerArrays.length === 1) return followerArrays[0];
@@ -330,6 +279,30 @@ class InstagramService {
 
     clearCache() {
         this.cache.clear();
+        this.saveCache();
+    }
+
+    randomBetween(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    loadCache() {
+        try {
+            const entries = JSON.parse(fs.readFileSync(this.cacheFile, 'utf8'));
+            this.cache = new Map(entries);
+        } catch (err) {
+            if (err.code !== 'ENOENT') console.warn(`Could not load cache: ${err.message}`); // ENOENT = first run, no file yet
+        }
+    }
+
+    saveCache() {
+        try {
+            const tmp = `${this.cacheFile}.tmp`;
+            fs.writeFileSync(tmp, JSON.stringify([...this.cache]));
+            fs.renameSync(tmp, this.cacheFile);
+        } catch (err) {
+            console.warn(`Could not save cache: ${err.message}`);
+        }
     }
 }
 
