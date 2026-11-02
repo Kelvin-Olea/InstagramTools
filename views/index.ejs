@@ -39,9 +39,9 @@
                   aria-selected="true" aria-controls="panel-friends">
             Friends
           </button>
-          <button type="button" class="tab" role="tab" id="tab-mutual"
-                  aria-selected="false" aria-controls="panel-mutual">
-            Mutual Followers
+          <button type="button" class="tab" role="tab" id="tab-filter"
+                  aria-selected="false" aria-controls="panel-filter">
+            Filter
           </button>
         </div>
 
@@ -62,29 +62,38 @@
           </div>
         </div>
 
-        <!-- TAB 2: multiple profiles -->
-        <div class="input-group tab-panel" id="panel-mutual" role="tabpanel" aria-labelledby="tab-mutual" hidden>
-          <p class="tab-hint">Compare two or more profiles to find the followers they share.</p>
-          <div class="usernames-container" id="mutual-usernames">
+        <!-- TAB 2: filter cached lists -->
+        <div class="input-group tab-panel" id="panel-filter" role="tabpanel" aria-labelledby="tab-mutual" hidden>
+          <p class="tab-hint">Filter through lists of followers you have cached.</p>
+            <div class="lists-container">
+            <div class="input-row">
+              <span class="input-num">PRIMARY</span>
+              <input type="text" class="username-input" placeholder="username"
+                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+              <span class="type-dropdown-container">
+                <select name="followerOrFollowing" id="follower-or-following-dropdown">
+                  <option value="" disabled selected hidden>Select</option>
+                  <option value="friends">Friends</option>
+                  <option value="followers">Followers</option>
+                  <option value="following">Following</option>
+                </select>
+              </span>
+            </div>
             <div class="input-row">
               <span class="input-num">01</span>
               <input type="text" class="username-input" placeholder="username"
                      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-            </div>
-            <div class="input-row">
-              <span class="input-num">02</span>
-              <input type="text" class="username-input" placeholder="username"
-                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+              <span class="type-dropdown-container">
+                <select name="followerOrFollowing" id="follower-or-following-dropdown">
+                  <option value="" disabled selected hidden>Select</option>
+                  <option value="friends">Friends</option>
+                  <option value="followers">Followers</option>
+                  <option value="following">Following</option>
+                </select>
+              </span>
             </div>
           </div>
           <div class="btn-row">
-            <button type="button" id="add-username-btn" class="btn btn-ghost">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.5"/>
-                <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.5"/>
-              </svg>
-              Add Profile
-            </button>
             <button type="button" class="btn btn-primary scan-btn" data-mode="mutual">
               Run Scan
             </button>
