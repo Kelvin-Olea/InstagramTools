@@ -1,3 +1,7 @@
 .env
 
 PrivateFiles/
+
+output.txt
+
+cache.json
