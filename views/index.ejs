@@ -63,7 +63,7 @@
         </div>
 
         <!-- TAB 2: filter cached lists -->
-        <div class="input-group tab-panel" id="panel-filter" role="tabpanel" aria-labelledby="tab-mutual" hidden>
+        <div class="input-group tab-panel" id="panel-filter" role="tabpanel" aria-labelledby="tab-filter" hidden>
           <p class="tab-hint">Filter through lists of followers you have cached.</p>
             <div class="lists-container">
             <div class="input-row">
@@ -71,7 +71,7 @@
               <input type="text" class="username-input" placeholder="username"
                      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
               <span class="type-dropdown-container">
-                <select name="followerOrFollowing" id="follower-or-following-dropdown">
+                <select name="followerOrFollowing" class="filter">
                   <option value="" disabled selected hidden>Select</option>
                   <option value="friends">Friends</option>
                   <option value="followers">Followers</option>
@@ -84,7 +84,7 @@
               <input type="text" class="username-input" placeholder="username"
                      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
               <span class="type-dropdown-container">
-                <select name="followerOrFollowing" id="follower-or-following-dropdown">
+                <select name="followerOrFollowing" class="filter">
                   <option value="" disabled selected hidden>Select</option>
                   <option value="friends">Friends</option>
                   <option value="followers">Followers</option>
@@ -158,7 +158,7 @@
   </div>
 
   <script>
-    const mutualContainer = document.getElementById('mutual-usernames');
+    const filterContainer = document.getElementById('lists-container');
     const addUsernameBtn  = document.getElementById('add-username-btn');
     const clearBtn        = document.getElementById('clear-btn');
     const loadingSection  = document.getElementById('loading-section');
@@ -195,18 +195,19 @@
 
     // Creates a new username insertion, and appends
     // it to the end of the input usernames section
-    addUsernameBtn.addEventListener('click', () => {
-      inputCount++;
-      const row = document.createElement('div');
-      row.className = 'input-row';
-      row.innerHTML = `
-        <span class="input-num">${String(inputCount).padStart(2,'0')}</span>
-        <input type="text" class="username-input" placeholder="username"
-               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      `;
-      mutualContainer.appendChild(row);
-      row.querySelector('input').focus();
-    });
+    // # Removed for testing only one filterable user # //
+    // addUsernameBtn.addEventListener('click', () => {
+    //   inputCount++;
+    //   const row = document.createElement('div');
+    //   row.className = 'input-row';
+    //   row.innerHTML = `
+    //     <span class="input-num">${String(inputCount).padStart(2,'0')}</span>
+    //     <input type="text" class="username-input" placeholder="username"
+    //            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+    //   `;
+    //   mutualContainer.appendChild(row);
+    //   row.querySelector('input').focus();
+    // });
 
     // Run the scan //
     document.querySelectorAll('.scan-btn').forEach(btn => {
@@ -219,15 +220,21 @@
 
         const usernames = Array.from(panel.querySelectorAll('.username-input')) // Creates a list of all input usernames
           .map(i => i.value.trim())
-          .filter(v => v.length > 0);
 
-        if (mode === 'friends') {
-          if (usernames.length < 1) return showError('Please enter a username.');
-          return fetchFriends(usernames);
-        }
+        if (usernames.length < 1 || usernames.some(u => !u)) return showError('Please fill in every username.');
 
-        if (usernames.length < 2) return showError('Please enter at least 2 usernames.');
-        return fetchMutualFollowers(usernames);
+        if (mode === 'friends') return fetchFriends(usernames);
+
+        if (filterUsernames.length < 2) return showError('Please enter at least 2 usernames.');
+
+        const filters = Array.from(panel.querySelectorAll('.filter')) // Creates an organized list of all selected filters
+          .map(filter => filter.value.trim());
+
+        if (filters.length !== usernames.length || filters.some(f => !f)) return showError('Please select a filter for every row.');
+
+        const filterUsernames = usernames.map((username, i) => [username, filters[i]]);
+
+        return filterLists(filterUsernames);
       });
     });
 
@@ -239,34 +246,34 @@
     });
 
     // Fetches mutual followers through custom API using input usernames //
-    // async function fetchMutualFollowers(usernames) {
-    //   try {
-    //     resultsSection.style.display = 'none';
-    //     errorSection.style.display   = 'none';
-    //     loadingSection.style.display = 'flex';
+    async function filterLists(usernames) {
+      try {
+        resultsSection.style.display = 'none';
+        errorSection.style.display   = 'none';
+        loadingSection.style.display = 'flex';
 
-    //     const res  = await fetch('/api/mutual-followers', {
-    //       method:  'POST',
-    //       headers: { 'Content-Type': 'application/json' },
-    //       body:    JSON.stringify({ usernames })
-    //     });
-    //     const data = await res.json();
+        const res  = await fetch('/api/mutual-followers', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ usernames })
+        });
+        const data = await res.json();
 
-    //     if (!res.ok) throw new Error(data.error || 'Failed to fetch mutual followers');
+        if (!res.ok) throw new Error(data.error || 'Failed to fetch mutual followers');
 
-    //     loadingSection.style.display = 'none';
-    //     displayResults(data);
-    //     resultsSection.style.display = 'block';
-    //   } catch (err) {
-    //     loadingSection.style.display = 'none';
-    //     showError(err.message);
-    //   } finally {
-    //     document.querySelectorAll('.scan-btn').forEach(btn => {
-    //       btn.disabled = false;
-    //       btn.textContent = "Run Scan"
-    //     }
-    //   }
-    // }
+        loadingSection.style.display = 'none';
+        displayResults(data);
+        resultsSection.style.display = 'block';
+      } catch (err) {
+        loadingSection.style.display = 'none';
+        showError(err.message);
+      } finally {
+        document.querySelectorAll('.scan-btn').forEach(btn => {
+          btn.disabled = false;
+          btn.textContent = "Run Scan"
+        }
+      }
+    }
 
     // Fetches friends through custom API using input username //
     async function fetchFriends(username) {
