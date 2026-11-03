@@ -40,42 +40,45 @@ class InstagramService {
         if (process.env.X_ASBD_ID) this.baseHeaders['X-ASBD-ID'] = process.env.X_ASBD_ID;
     }
 
-    getHeaders(username){
-        return{
-            ...this.baseHeaders,
-            'Referer': `${this.baseUrl}/${username}/`
-        };
-    }
-
-    getUserIDHeaders(){
-        return {
-            'User-Agent': this.baseHeaders['User-Agent'],
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Site': 'same-origin',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-User': '?1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Ch-Ua': this.baseHeaders['Sec-Ch-Ua'],
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Linux"',
-            'Cookie': this.baseHeaders['Cookie'],
-            'Referer': `${this.baseUrl}/`
-        };
-    }
-
-    // Scan through HTML text for a user's UserId //
-    async parseHtmlForUserId(html){
-        const re =  /"profile_id":"(\d+)"/g;
-
-        // Full Match (m[0]) is the entire captured text
-        // Group 1 (m[1]) is the ID
-        // Group 2 (m[2]) is if the acc is private or not
-        for (const m of html.matchAll(re)) {
-            if (m[1] === String(process.env.DS_USER_ID)) continue; // skip your own account
-            return { id: m[1] };
+    // Get who user is friends with //
+    async getFriends(username) {
+        const cacheKey = `friends_${username}`;
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
         }
+
+        const userId = await this.fetchUserId(username);
+
+        if (!userId) throw new Error(`Could not find user: ${username}`);
+
+        // Add a way to ensure the user is either public, or someone we're following //
+
+        const followers = await this.fetchFollowersList(userId, username);
+        await this.delay(this.randomBetween(8000, 12000))
+        const following = await this.fetchFollowingList(userId, username);
+
+        const friends = await this.findIntersection([followers, following]);
+
+        this.cache.set(cacheKey, friends);
+        this.saveCache();
+
+        return friends;
+    }
+
+    async getFilteredList(filteredUsernames, booleanOperator) {
+
+        let cachedLists = []
+
+        for (const params of filteredUsernames) {
+            if (this.cache.has(`${params[1]}_${params[0]}`)) {
+                cachedLists.push(this.cache.has(`${params[1]}_${params[0]}`))
+            } else {
+                throw Error(`User ${params[0]} does not exist in the cache. Run them through the friend finder first.`)
+            }
+        }
+
+        // const friends = await this.findIntersection([followers, following]);
+
         return null;
     }
 
@@ -115,31 +118,6 @@ class InstagramService {
             if (error.message.includes('session')) throw error;
             throw new Error(`Failed to fetch user info for ${username}: ${error.message}`);
         }
-    }
-
-    // Get who user is friends with //
-    async getFriends(username) {
-        const cacheKey = `friends_${username}`;
-        if (this.cache.has(cacheKey)) {
-            return this.cache.get(cacheKey);
-        }
-
-        const userId = await this.fetchUserId(username);
-
-        if (!userId) throw new Error(`Could not find user: ${username}`);
-
-        // Add a way to ensure the user is either public, or someone we're following //
-
-        const followers = await this.fetchFollowersList(userId, username);
-        await this.delay(this.randomBetween(8000, 12000))
-        const following = await this.fetchFollowingList(userId, username);
-
-        const friends = await this.findIntersection([followers, following]);
-
-        this.cache.set(cacheKey, friends);
-        this.saveCache();
-
-        return friends;
     }
 
     // Fetch paginated followers list via friendships endpoint //
@@ -271,6 +249,45 @@ class InstagramService {
         return followerArrays[0].filter(
             follower => sets.slice(1).every(set => set.has(follower.username))
         );
+    }
+
+    getHeaders(username){
+        return{
+            ...this.baseHeaders,
+            'Referer': `${this.baseUrl}/${username}/`
+        };
+    }
+
+    getUserIDHeaders(){
+        return {
+            'User-Agent': this.baseHeaders['User-Agent'],
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-User': '?1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Ch-Ua': this.baseHeaders['Sec-Ch-Ua'],
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Linux"',
+            'Cookie': this.baseHeaders['Cookie'],
+            'Referer': `${this.baseUrl}/`
+        };
+    }
+
+    // Scan through HTML text for a user's UserId //
+    async parseHtmlForUserId(html){
+        const re =  /"profile_id":"(\d+)"/g;
+
+        // Full Match (m[0]) is the entire captured text
+        // Group 1 (m[1]) is the ID
+        // Group 2 (m[2]) is if the acc is private or not
+        for (const m of html.matchAll(re)) {
+            if (m[1] === String(process.env.DS_USER_ID)) continue; // skip your own account
+            return { id: m[1] };
+        }
+        return null;
     }
 
     delay(ms) {

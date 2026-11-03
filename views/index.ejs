@@ -83,8 +83,8 @@
               <span class="input-num">01</span>
               <input type="text" class="username-input" placeholder="username"
                       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-              <span id="boolean-dropdown">
-                <select name="followerOrFollowing" class="filter">
+              <span class="type-dropdown-container">
+                <select name="followerOrFollowing" class="boolean-filter">
                   <option value="" disabled selected hidden>Select</option>
                   <option value="and">AND</option>
                   <option value="or">OR</option>
@@ -233,15 +233,15 @@
 
         if (mode === 'friends') return fetchFriends(usernames);
 
-        if (filterUsernames.length < 2) return showError('Please enter at least 2 usernames.');
-
         const filters = Array.from(panel.querySelectorAll('.filter')) // Creates an organized list of all selected filters
           .map(filter => filter.value.trim());
-
+        
         if (filters.length !== usernames.length || filters.some(f => !f)) return showError('Please select a filter for every row.');
 
         const filterUsernames = usernames.map((username, i) => [username, filters[i]]);
-        const booleanOperator = panel.querySelector('#boolean-dropdown').value
+        const booleanOperator = panel.querySelector('.boolean-filter').value
+
+        if (filterUsernames.length < 2) return showError('Please enter at least 2 usernames.');
 
         return filterLists(filterUsernames, booleanOperator);
       });
@@ -256,13 +256,11 @@
 
     // Fetches mutual followers through custom API using input usernames //
     async function filterLists(filterUsernames, booleanOperator) {
-
       /* 
       filterusernames = [
         ["Username", "FilterList"]
       ]
       */
-
       try {
         resultsSection.style.display = 'none';
         errorSection.style.display   = 'none';
@@ -279,7 +277,8 @@
         if (!res.ok) throw new Error(data.error || 'Failed to filter lists');
 
         loadingSection.style.display = 'none';
-        displayResults(data);
+        showError("goon")
+        // displayResults(data);
         resultsSection.style.display = 'block';
       } catch (err) {
         loadingSection.style.display = 'none';
