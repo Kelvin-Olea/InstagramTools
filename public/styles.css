@@ -189,7 +189,7 @@ header h1 {
   caret-color: var(--accent);
 }
 
-#follower-or-following-dropdown {
+.filter {
   flex: 1;
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -202,7 +202,11 @@ header h1 {
   outline: none;
   transition: border-color 0.2s, background 0.2s;
   caret-color: var(--accent);
-  color: var(--text-mid);
+  color: var(--text-dim);
+}
+
+.filter:has(option:checked:not([value=""])) {
+  color: var(--text)
 }
 
 .username-input::placeholder {
