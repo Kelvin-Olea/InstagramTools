@@ -82,7 +82,15 @@
             <div class="input-row">
               <span class="input-num">01</span>
               <input type="text" class="username-input" placeholder="username"
-                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+                      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+              <span class="boolean-dropdown">
+                <select name="followerOrFollowing" class="filter">
+                  <option value="" disabled selected hidden>Select</option>
+                  <option value="and">AND</option>
+                  <option value="or">OR</option>
+                  <option value="not">NOT</option>
+                </select>
+              </span>
               <span class="type-dropdown-container">
                 <select name="followerOrFollowing" class="filter">
                   <option value="" disabled selected hidden>Select</option>
@@ -271,7 +279,7 @@
         document.querySelectorAll('.scan-btn').forEach(btn => {
           btn.disabled = false;
           btn.textContent = "Run Scan"
-        }
+        })
       }
     }
 
