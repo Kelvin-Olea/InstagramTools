@@ -152,6 +152,12 @@ header h1 {
   gap: 10px;
 }
 
+.lists-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .input-row {
   display: flex;
   align-items: center;
@@ -181,6 +187,26 @@ header h1 {
   outline: none;
   transition: border-color 0.2s, background 0.2s;
   caret-color: var(--accent);
+}
+
+.filter {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-hi);
+  color: var(--text);
+  font-family: var(--f-mono);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  padding: 13px 18px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  caret-color: var(--accent);
+  color: var(--text-dim);
+}
+
+.filter:has(option:checked:not([value=""])) {
+  color: var(--text)
 }
 
 .username-input::placeholder {
