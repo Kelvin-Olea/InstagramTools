@@ -35,7 +35,7 @@ body {
   /* warm vignette */
   background-image:
     radial-gradient(circle 25rem at 10% 0%,  var(--accent-fade) 0%, transparent 80%),
-    radial-gradient(ellipse 50% 60% at 90% 100%,  var(--accent-fade)  0%, transparent 60%);
+    radial-gradient(ellipse 50% 60% at 90% 100%,  var(--accent-fade)  0%, transparent 80%);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;

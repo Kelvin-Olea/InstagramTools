@@ -59,4 +59,33 @@ router.post('/api/friends', async (req, res) => {
     }
 });
 
+const fetch = require('node-fetch');
+
+router.get('/pfp', async (req, res) => {
+    try {
+        const url = new URL(req.query.url);
+
+        // https only, and only Instagram CDN hosts, otherwise this becomes an open proxy
+        if (url.protocol !== 'https:' || !/(^|\.)cdninstagram\.com$|(^|\.)fbcdn\.net$/.test(url.hostname)) {
+            return res.status(400).send('Invalid host');
+        }
+
+        const upstream = await fetch(url.href, {
+            timeout: 10000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36' },
+        });
+        
+        if (!upstream.ok) return res.status(upstream.status).end();
+
+        const type = upstream.headers.get('content-type') || 'image/jpeg';
+        if (!type.startsWith('image/')) return res.status(400).send('Not an image');
+
+        res.set('Content-Type', type);
+        res.set('Cache-Control', 'public, max-age=86400');
+        upstream.body.on('error', () => res.end());
+        upstream.body.pipe(res);
+    } catch (err) {
+        res.status(400).send('Bad request');
+    }
+});
 module.exports = router;
