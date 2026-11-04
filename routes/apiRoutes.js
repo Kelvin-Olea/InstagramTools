@@ -8,32 +8,34 @@ function getErrorMessage(error) {
     return msg || 'An unexpected error occurred.';
 }
 
-// router.post('/api/mutual-followers', async (req, res) => {
-//     try {
-//         const { usernames } = req.body;
+router.post('/api/filter-lists', async (req, res) => {
+    try {
+        const { filterUsernames } = req.body;
+        const { booleanOperator } = req.body;
 
-//         if (!usernames || !Array.isArray(usernames) || usernames.length < 2) {
-//             return res.status(400).json({ error: 'Please provide at least 2 usernames' });
-//         }
+        if (!filterUsernames || !Array.isArray(filterUsernames) || filterUsernames.length < 2) {
+            return res.status(400).json({ error: 'Please provide at least 2 usernames' });
+        }
 
-//         const invalid = usernames.filter(u => !u || typeof u !== 'string' || u.trim().length === 0);
-//         if (invalid.length > 0) {
-//             return res.status(400).json({ error: 'All usernames must be non-empty strings' });
-//         }
+        const invalid = filterUsernames.filter(u => !u[0] || typeof u[0] !== 'string' || u[0].trim().length === 0);
+        if (invalid.length > 0) {
+            return res.status(400).json({ error: 'All usernames must be non-empty strings' });
+        }
 
-//         const mutualFollowers = await InstagramService.getMutualFollowers(usernames);
+        const usernames = filterUsernames
+        const usersList = await InstagramService.getFilteredList(filterUsernames, booleanOperator);
 
-//         res.json({
-//             success: true,
-//             usernames,
-//             mutualFollowers,
-//             count: mutualFollowers.length,
-//         });
-//     } catch (error) {
-//         console.error('Error fetching mutual followers:', error);
-//         res.status(500).json({ error: getErrorMessage(error) });
-//     }
-// });
+        res.json({
+            success: true,
+            usernames,
+            usersList,
+            count: usersList.length,
+        });
+    } catch (error) {
+        console.error('Error fetching mutual followers:', error);
+        res.status(500).json({ error: getErrorMessage(error) });
+    }
+});
 
 router.post('/api/friends', async (req, res) => {
     try {
