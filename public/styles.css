@@ -189,7 +189,7 @@ header h1 {
   caret-color: var(--accent);
 }
 
-.filter {
+.filter, .boolean-filter {
   flex: 1;
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -205,7 +205,7 @@ header h1 {
   color: var(--text-dim);
 }
 
-.filter:has(option:checked:not([value=""])) {
+.filter:has(option:checked:not([value=""])), .boolean-filter:has(option:checked:not([value=""])) {
   color: var(--text)
 }
 
