@@ -87,7 +87,6 @@
                 <select name="followerOrFollowing" class="boolean-filter">
                   <option value="" disabled selected hidden>Select</option>
                   <option value="and">AND</option>
-                  <option value="or">OR</option>
                   <option value="not">NOT</option>
                 </select>
               </span>
@@ -277,8 +276,7 @@
         if (!res.ok) throw new Error(data.error || 'Failed to filter lists');
 
         loadingSection.style.display = 'none';
-        showError("goon")
-        // displayResults(data);
+        displayResults(data);
         resultsSection.style.display = 'block';
       } catch (err) {
         loadingSection.style.display = 'none';
