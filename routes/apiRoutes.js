@@ -22,12 +22,14 @@ router.post('/api/filter-lists', async (req, res) => {
             return res.status(400).json({ error: 'All usernames must be non-empty strings' });
         }
 
-        const filteredList = await InstagramService.getFilteredList(filterUsernames, booleanOperator);
+        const usernames = filterUsernames
+        const usersList = await InstagramService.getFilteredList(filterUsernames, booleanOperator);
 
         res.json({
             success: true,
-            filteredList,
-            count: filteredList.length,
+            usernames,
+            usersList,
+            count: usersList.length,
         });
     } catch (error) {
         console.error('Error fetching mutual followers:', error);

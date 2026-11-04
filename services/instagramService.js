@@ -71,15 +71,15 @@ class InstagramService {
 
         for (const params of filteredUsernames) {
             if (this.cache.has(`${params[1]}_${params[0]}`)) {
-                cachedLists.push(this.cache.has(`${params[1]}_${params[0]}`))
+                cachedLists.push(this.cache.get(`${params[1]}_${params[0]}`))
             } else {
                 throw Error(`User ${params[0]} does not exist in the cache. Run them through the friend finder first.`)
             }
         }
 
-        // const friends = await this.findIntersection([followers, following]);
+        const filteredList = await this.findIntersection([cachedLists[0], cachedLists[1]], booleanOperator);
 
-        return null;
+        return filteredList;
     }
 
     async fetchUserId(username) {
@@ -238,7 +238,7 @@ class InstagramService {
         return following;
     }
 
-    findIntersection(followerArrays) {
+    findIntersection(followerArrays, booleanOperator) {
         if (followerArrays.length === 0) return [];
         if (followerArrays.length === 1) return followerArrays[0];
 
@@ -246,9 +246,21 @@ class InstagramService {
             followers => new Set(followers.map(f => f.username))
         );
 
-        return followerArrays[0].filter(
-            follower => sets.slice(1).every(set => set.has(follower.username))
-        );
+        if (!booleanOperator) {
+            return followerArrays[0].filter(
+                follower => sets.slice(1).every(set => set.has(follower.username))
+            );
+        }
+
+        if (booleanOperator == "and") {
+            return followerArrays[0].filter(
+                follower => sets.slice(1).every(set => set.has(follower.username))
+            );
+        } else if (booleanOperator == "not") {
+            return followerArrays[0].filter(
+                follower => sets.slice(1).every(set => !set.has(follower.username))
+            );
+        }
     }
 
     getHeaders(username){
