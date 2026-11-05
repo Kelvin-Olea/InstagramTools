@@ -6,7 +6,7 @@
   <title><%= title %></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@400;500&family=Redaction+50:ital,wght@0,400;0,700;1,400&family=Redaction+35:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 
 </head>
@@ -23,7 +23,7 @@
           <circle cx="40" cy="40" r="39" stroke-width="1" opacity="1"/>
         </svg>
       </div>
-      <h1>Instagram<br>Tools</h1>
+      <h1>instagram<br>tools</h1>
       <p class="tagline">Tools used to easily sort through users following/followers lists</p>
     </header>
 
@@ -84,7 +84,7 @@
               <input type="text" class="username-input" placeholder="username"
                       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
               <span class="type-dropdown-container">
-                <select name="followerOrFollowing" class="boolean-filter">
+                <select name="followerOrFollowing" class="filter" id="boolean-filter">
                   <option value="" disabled selected hidden>Select</option>
                   <option value="and">AND</option>
                   <option value="not">NOT</option>
@@ -238,7 +238,7 @@
         if (filters.length !== usernames.length || filters.some(f => !f)) return showError('Please select a filter for every row.');
 
         const filterUsernames = usernames.map((username, i) => [username, filters[i]]);
-        const booleanOperator = panel.querySelector('.boolean-filter').value
+        const booleanOperator = panel.querySelector('#boolean-filter').value
 
         if (filterUsernames.length < 2) return showError('Please enter at least 2 usernames.');
 
