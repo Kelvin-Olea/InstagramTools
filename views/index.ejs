@@ -6,7 +6,7 @@
   <title><%= title %></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Redaction+10:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400;500&family=Redaction+50:ital,wght@0,400;0,700;1,400&family=Redaction+35:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Redaction+10:ital,wght@0,400;0,700;1,400&family=Kanchenjunga:wght@400;500;600;700&family=Redaction+50:ital,wght@0,400;0,700;1,400&family=Redaction+35:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 
 </head>
@@ -47,16 +47,16 @@
 
         <!-- TAB 1: single profile -->
         <div class="input-group tab-panel" id="panel-friends" role="tabpanel" aria-labelledby="tab-friends">
-          <p class="tab-hint">Scan a single profile.</p>
+          <p class="tab-hint" style="--i: 0">Scan a single profile.</p>
           <div class="usernames-container">
             <div class="input-row">
-              <span class="input-num">01</span>
+              <span class="input-num" style="--i: 1">01</span>
               <input type="text" class="username-input" placeholder="username"
-                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="--i: 2"/>
             </div>
           </div>
           <div class="btn-row">
-            <button type="button" class="btn btn-primary scan-btn" data-mode="friends">
+            <button type="button" class="btn btn-primary scan-btn" data-mode="friends" style="--i: 3">
               Run Scan
             </button>
           </div>
@@ -64,13 +64,13 @@
 
         <!-- TAB 2: filter cached lists -->
         <div class="input-group tab-panel" id="panel-filter" role="tabpanel" aria-labelledby="tab-filter" hidden>
-          <p class="tab-hint">Filter through lists of followers you have cached.</p>
+          <p class="tab-hint" style="--i: 0">Filter through lists of followers you have cached.</p>
             <div class="lists-container">
-            <div class="input-row">
-              <span class="input-num">PRIMARY</span>
+            <div class="input-row" >
+              <span class="input-num" style="--i: 1">PRIMARY</span>
               <input type="text" class="username-input" placeholder="username"
-                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-              <span class="type-dropdown-container">
+                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="--i: 2"/>
+              <span class="type-dropdown-container" style="--i: 2">
                 <select name="followerOrFollowing" class="filter">
                   <option value="" disabled selected hidden>Select</option>
                   <option value="friends">Friends</option>
@@ -80,17 +80,17 @@
               </span>
             </div>
             <div class="input-row">
-              <span class="input-num">01</span>
+              <span class="input-num" style="--i: 3">01</span>
               <input type="text" class="username-input" placeholder="username"
-                      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-              <span class="type-dropdown-container">
+                      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="--i: 4"/>
+              <span class="type-dropdown-container" style="--i: 5">
                 <select name="followerOrFollowing" class="filter" id="boolean-filter">
                   <option value="" disabled selected hidden>Select</option>
                   <option value="and">AND</option>
                   <option value="not">NOT</option>
                 </select>
               </span>
-              <span class="type-dropdown-container">
+              <span class="type-dropdown-container" style="--i: 6">
                 <select name="followerOrFollowing" class="filter">
                   <option value="" disabled selected hidden>Select</option>
                   <option value="friends">Friends</option>
@@ -101,7 +101,7 @@
             </div>
           </div>
           <div class="btn-row">
-            <button type="button" class="btn btn-primary scan-btn" data-mode="mutual">
+            <button type="button" class="btn btn-primary scan-btn" data-mode="mutual" style="--i: 7">
               Run Scan
             </button>
           </div>
