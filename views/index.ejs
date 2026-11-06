@@ -6,7 +6,7 @@
   <title><%= title %></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@400;500&family=Redaction+50:ital,wght@0,400;0,700;1,400&family=Redaction+35:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Redaction+10:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400;500&family=Redaction+50:ital,wght@0,400;0,700;1,400&family=Redaction+35:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 
 </head>
@@ -233,6 +233,7 @@
         if (mode === 'friends') return fetchFriends(usernames);
 
         const filters = Array.from(panel.querySelectorAll('.filter')) // Creates an organized list of all selected filters
+          .filter(element => element.id !== "boolean-filter")
           .map(filter => filter.value.trim());
         
         if (filters.length !== usernames.length || filters.some(f => !f)) return showError('Please select a filter for every row.');

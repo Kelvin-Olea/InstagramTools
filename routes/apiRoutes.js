@@ -81,7 +81,7 @@ router.get('/pfp', async (req, res) => {
         if (!type.startsWith('image/')) return res.status(400).send('Not an image');
 
         res.set('Content-Type', type);
-        res.set('Cache-Control', 'public, max-age=86400');
+        res.set('Cache-Control', 'public, max-age=43200'); // 43200 = 12 hrs
         upstream.body.on('error', () => res.end());
         upstream.body.pipe(res);
     } catch (err) {
