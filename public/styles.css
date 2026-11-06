@@ -15,8 +15,8 @@
   --red:          #bf3535;
   --red-fade:     rgba(191,53,53,0.1);
 
-  --f-display: 'Redaction 10', 'Arial Narrow', serif;
-  --f-body:    'Redaction 10', Georgia, serif;
+  --f-display: 'Redaction 10', 'Kanchenjunga', serif;
+  --f-body:    'Redaction 10', 'Kanchenjunga', serif;
   --f-mono:    'Redaction 50', 'Courier New', serif;
 
   --tab-border: rgba(255, 255, 255, 0.14);
@@ -305,6 +305,11 @@ header h1 {
   opacity: 0.65;
 }
 
+.tab-panel:not([hidden]) * {
+  opacity: 0; /* start invisible, since the delay happens before the animation starts */
+  animation: fadeUp 350ms ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
 
 /* ─── RESULTS ────────────────────────────────────────────── */
 .results-section { margin-bottom: 28px; }
@@ -631,6 +636,16 @@ code {
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes panel-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
