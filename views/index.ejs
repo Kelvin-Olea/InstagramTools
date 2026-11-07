@@ -43,6 +43,11 @@
                   aria-selected="false" aria-controls="panel-filter">
             Filter
           </button>
+          <button type="button" class="tab" role="tab" id="tab-map"
+                  aria-selected="false" aria-controls="panel-map">
+            Map
+          </button>
+
         </div>
 
         <!-- TAB 1: single profile -->
@@ -106,8 +111,21 @@
             </button>
           </div>
         </div>
-      </section>
 
+        <!-- TAB 3: follower map -->
+        <div class="input-group tab-panel" id="panel-map" role="tabpanel" aria-labelledby="tab-map" hidden>
+          <p class="tab-hint" style="--i: 0">Generate a map of currently cached users.</p>
+          <div class="map">
+            
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-primary map-btn" data-mode="map" style="--i: 1">
+              Generate Map
+            </button>
+          </div>
+        </div>
+
+      </section>
       <!-- RESULTS -->
       <section id="results-section" class="results-section" style="display: none;">
         <div class="results-header">
