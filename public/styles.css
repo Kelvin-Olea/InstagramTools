@@ -64,6 +64,24 @@ body::after {
   padding: 0 28px 100px;
 }
 
+/* ─── FOOOTER ─────────────────────────────────────────────── */
+footer {
+  padding: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+footer p {
+  font-family: var(--f-body);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-mid);
+  align-self: center;
+  animation: fadeIn 0.9s 0.25s ease both;
+}
+
 /* ─── HEADER ─────────────────────────────────────────────── */
 header {
   padding: 72px 0 64px;
@@ -260,7 +278,7 @@ header h1 {
   padding: 10px 20px;
   font-size: 14px;
   letter-spacing: 0.16em;
-  box-shadow: inset 0px 0px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0px 0px 12px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary:hover {
