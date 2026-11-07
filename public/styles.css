@@ -34,8 +34,8 @@ body {
   background-color: var(--bg);
   /* warm vignette */
   background-image:
-    radial-gradient(circle 25rem at 10% 0%,  var(--accent-fade) 0%, transparent 80%),
-    radial-gradient(ellipse 50% 60% at 90% 100%,  var(--accent-fade)  0%, transparent 80%);
+    radial-gradient(circle 25rem at 10% 0%,  var(--accent-fade) 10%, transparent 80%),
+    radial-gradient(ellipse 50% 60% at 90% 100%,  var(--accent-fade)  10%, transparent 80%);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
@@ -260,12 +260,14 @@ header h1 {
   padding: 10px 20px;
   font-size: 14px;
   letter-spacing: 0.16em;
+  box-shadow: inset 0px 0px 12px rgba(0, 0, 0, 0.4);
 }
 
 .btn-primary:hover {
   background: var(--accent-hi);
   border-color: var(--accent-hi);
   color: #0d0b09;
+  box-shadow: inset 0px 0px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:active { transform: translateY(1px); }
