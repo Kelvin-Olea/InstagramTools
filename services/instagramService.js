@@ -173,10 +173,12 @@ class InstagramService {
             } 
         // } 
 
-        this.cache.set(cacheKey, followers);
+        const uniqueFollowers = followers.filter((obj, index, self) => index === self.findIndex((t) => t.id === obj.id))
+
+        this.cache.set(cacheKey, uniqueFollowers);
         this.saveCache();
 
-        return followers;
+        return uniqueFollowers;
     }
 
     // Fetch paginated following list via friendships endpoint //
@@ -232,10 +234,12 @@ class InstagramService {
             } 
         // } 
 
-        this.cache.set(cacheKey, following);
+        const uniqueFollowing = following.filter((obj, index, self) => index === self.findIndex((t) => t.id === obj.id))
+
+        this.cache.set(cacheKey, uniqueFollowing);
         this.saveCache();
 
-        return following;
+        return uniqueFollowing;
     }
 
     findIntersection(followerArrays, booleanOperator) {
