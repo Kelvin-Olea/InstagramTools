@@ -115,11 +115,9 @@
         <!-- TAB 3: follower map -->
         <div class="input-group tab-panel" id="panel-map" role="tabpanel" aria-labelledby="tab-map" hidden>
           <p class="tab-hint" style="--i: 0">Generate a map of currently cached users.</p>
-          <div class="map">
-            
-          </div>
+          <div class="map" id="map-results" style="--i: 1"></div>          
           <div class="btn-row">
-            <button type="button" class="btn btn-primary map-btn" data-mode="map" style="--i: 1">
+            <button type="button" class="btn btn-primary map-btn" data-mode="map" style="--i: 2">
               Generate Map
             </button>
           </div>
@@ -186,6 +184,7 @@
     </footer>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script>
     const filterContainer = document.getElementById('lists-container');
     const addUsernameBtn  = document.getElementById('add-username-btn');
@@ -221,22 +220,6 @@
     tabs.forEach((tab, i) => {
       tab.addEventListener('click', () => activateTab(tab));
     });
-
-    // Creates a new username insertion, and appends
-    // it to the end of the input usernames section
-    // # Removed for testing only one filterable user # //
-    // addUsernameBtn.addEventListener('click', () => {
-    //   inputCount++;
-    //   const row = document.createElement('div');
-    //   row.className = 'input-row';
-    //   row.innerHTML = `
-    //     <span class="input-num">${String(inputCount).padStart(2,'0')}</span>
-    //     <input type="text" class="username-input" placeholder="username"
-    //            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-    //   `;
-    //   mutualContainer.appendChild(row);
-    //   row.querySelector('input').focus();
-    // });
 
     // Run the scan //
     document.querySelectorAll('.scan-btn').forEach(btn => {
@@ -386,6 +369,104 @@
       errorSection.style.display   = 'block';
       document.getElementById('error-message').textContent = msg;
     }
+
+    /* ---------- Generate The Map ---------- */
+    const data = {
+      nodes: [
+        { id: "alice" },
+        { id: "bob" },
+        { id: "carol" }
+      ],
+      links: [
+        { source: "alice", target: "bob" },
+        { source: "bob", target: "carol" }
+      ]
+    };
+
+
+    function renderGraph(data) {
+      const container = document.getElementById('map-results');
+      container.innerHTML = '';
+
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      const svg = d3.select(container)
+        .append('svg')
+        .attr('width', '100%')
+        .attr('height', '100%')
+        .attr('viewBox', [0, 0, width, height]);
+
+      const g = svg.append('g');
+
+      // Add a lister to the svg to detect mouse zoom + pan
+      svg.call(d3.zoom()
+        .scaleExtent([0.2, 4])
+        .on('zoom', e => g.attr('transform', e.transform)));
+
+      // Simulate the forces acting on the nodes
+      const simulation = d3.forceSimulation(data.nodes)
+        .force('link', d3.forceLink(data.links).id(d => d.id).distance(60))
+        .force('charge', d3.forceManyBody().strength(-120))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collide', d3.forceCollide(12));
+
+      // Create all the links between the nodes
+      const link = g.append('g')
+        .attr('stroke', 'rgba(255,255,255,0.25)')
+        .selectAll('line')
+        .data(data.links)
+        .join('line');
+
+      // Create all the nodes
+      const node = g.append('g')
+        .selectAll('circle')
+        .data(data.nodes)
+        .join('circle')
+        .attr('r', 6)
+        .attr('fill', '#8b5cf6')
+        .call(drag(simulation));
+
+      node.append('title').text(d => d.id);   // hover tooltip
+
+      const label = g.append('g')
+        .selectAll('text')
+        .data(data.nodes)
+        .join('text')
+        .text(d => d.id)
+        .attr('font-size', 10)
+        .attr('fill', '#ccc')
+        .attr('dx', 10)
+        .attr('dy', 3);
+
+      simulation.on('tick', () => {
+        link
+          .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+        node.attr('cx', d => d.x).attr('cy', d => d.y);
+        label.attr('x', d => d.x).attr('y', d => d.y);
+      });
+    }
+
+    function drag(simulation) {
+      return d3.drag()
+        .on('start', (e, d) => {
+          if (!e.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x; d.fy = d.y;
+        })
+        .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+        .on('end', (e, d) => {
+          if (!e.active) simulation.alphaTarget(0);
+          d.fx = null; d.fy = null;
+        });
+    }
+
+    document.querySelector('.map-btn').addEventListener('click', async () => {
+      // const res = await fetch('/api/map');
+      // const data = await res.json();
+      renderGraph(data);
+    });
+
   </script>
 </body>
 </html>
