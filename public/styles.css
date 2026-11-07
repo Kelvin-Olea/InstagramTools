@@ -15,9 +15,9 @@
   --red:          #bf3535;
   --red-fade:     rgba(191,53,53,0.1);
 
-  --f-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
-  --f-body:    'Crimson Pro', Georgia, serif;
-  --f-mono:    'Fira Code', 'Courier New', monospace;
+  --f-display: 'Redaction 10', 'Kanchenjunga', serif;
+  --f-body:    'Redaction 10', 'Kanchenjunga', serif;
+  --f-mono:    'Redaction 50', 'Courier New', serif;
 
   --tab-border: rgba(255, 255, 255, 0.14);
   --tab-muted: rgba(255, 255, 255, 0.5);
@@ -34,8 +34,8 @@ body {
   background-color: var(--bg);
   /* warm vignette */
   background-image:
-    radial-gradient(circle 25rem at 10% 0%,  var(--accent-fade) 0%, transparent 80%),
-    radial-gradient(ellipse 50% 60% at 90% 100%,  var(--accent-fade)  0%, transparent 80%);
+    radial-gradient(circle 25rem at 10% 0%,  var(--accent-fade) 10%, transparent 80%),
+    radial-gradient(ellipse 50% 60% at 90% 100%,  var(--accent-fade)  10%, transparent 80%);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
@@ -64,6 +64,24 @@ body::after {
   padding: 0 28px 100px;
 }
 
+/* ─── FOOOTER ─────────────────────────────────────────────── */
+footer {
+  padding: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+footer p {
+  font-family: var(--f-body);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-mid);
+  align-self: center;
+  animation: fadeIn 0.9s 0.25s ease both;
+}
+
 /* ─── HEADER ─────────────────────────────────────────────── */
 header {
   padding: 72px 0 64px;
@@ -79,15 +97,15 @@ header {
   margin-bottom: 28px;
   align-self: center;
   opacity: 0.85;
-  animation: slowSpin 24s linear infinite, fadeIn 0.8s ease both;
+  animation: spinUp 1.5s cubic-bezier(0.15, 0.6, 0.3, 0.978), slowSpin 24s linear 1.5s infinite, fadeIn 0.8s ease both;
 }
 
 header h1 {
   font-family: var(--f-display);
   font-size: clamp(80px, 15vw, 148px);
   font-weight: 400;
-  line-height: 0.88;
-  letter-spacing: 0.015em;
+  line-height: 1em;
+  letter-spacing: 0.05em;
   text-align: center;
   align-self: center;
   color: var(--text);
@@ -112,7 +130,7 @@ header h1 {
 /* ─── SECTION LABEL ──────────────────────────────────────── */
 .section-label {
   font-family: var(--f-mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.22em;
   color: var(--accent);
@@ -180,7 +198,7 @@ header h1 {
   border: 1px solid var(--border);
   border-bottom: 1px solid var(--border-hi);
   color: var(--text);
-  font-family: var(--f-mono);
+  font-family: var(--f-body);
   font-size: 14px;
   letter-spacing: 0.04em;
   padding: 13px 18px;
@@ -214,7 +232,7 @@ header h1 {
   font-style: italic;
 }
 
-.username-input:focus {
+.username-input:focus, .filter:focus {
   border-color: var(--accent);
   background: #1a1410;
 }
@@ -230,7 +248,7 @@ header h1 {
 .btn {
   font-family: var(--f-mono);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: 12px 22px;
@@ -257,15 +275,17 @@ header h1 {
   border-color: var(--accent);
   color: #0d0b09;
   margin-left: auto;
-  padding: 13px 32px;
-  font-size: 12px;
+  padding: 10px 20px;
+  font-size: 14px;
   letter-spacing: 0.16em;
+  box-shadow: inset 0px 0px 12px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary:hover {
   background: var(--accent-hi);
   border-color: var(--accent-hi);
   color: #0d0b09;
+  box-shadow: inset 0px 0px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:active { transform: translateY(1px); }
@@ -285,7 +305,7 @@ header h1 {
   margin-bottom: -1px;
   padding: 0.7rem 1.25rem;
   color: var(--tab-muted);
-  font-family: 'Fira Code', monospace;
+  font-family: var(--f-mono);
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -305,6 +325,11 @@ header h1 {
   opacity: 0.65;
 }
 
+.tab-panel:not([hidden]) * {
+  opacity: 0; /* start invisible, since the delay happens before the animation starts */
+  animation: fadeUp 350ms ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
 
 /* ─── RESULTS ────────────────────────────────────────────── */
 .results-section { margin-bottom: 28px; }
@@ -610,6 +635,10 @@ code {
   to   { transform: rotate(360deg); }
 }
 
+@keyframes spinUp {
+  to { transform: rotate(720deg); }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -627,6 +656,16 @@ code {
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes panel-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
