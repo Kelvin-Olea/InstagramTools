@@ -404,7 +404,10 @@
       // Add a lister to the svg to detect mouse zoom + pan
       svg.call(d3.zoom()
         .scaleExtent([0.2, 4])
-        .on('zoom', e => g.attr('transform', e.transform)));
+        .on('zoom', e => {
+          console.log('zoom', e.transform);
+          g.attr('transform', e.transform);
+        }));
 
       // Simulate the forces acting on the nodes
       const simulation = d3.forceSimulation(data.nodes)
