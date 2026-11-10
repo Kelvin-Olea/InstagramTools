@@ -59,6 +59,17 @@ router.post('/api/friends', async (req, res) => {
     }
 });
 
+router.post('/api/friends/estimate', async (req, res) => {
+    const username = req.body.username?.[0];
+    if (typeof username !== 'string' || !username.trim()) {
+        return res.status(400).json({ error: 'Invalid username' });
+    }
+    
+    const estimate = await InstagramService.estimateFriendsTime(username);
+
+    res.json({ success: true, estimatedSeconds: estimate });
+});
+
 const fetch = require('node-fetch');
 
 router.get('/pfp', async (req, res) => {
