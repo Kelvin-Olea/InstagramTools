@@ -83,7 +83,6 @@ class InstagramService {
     }
 
     getMap() {
-        console.log("Generating")
         const PREFIX = 'friends_';
         const nodes = new Map();   // username -> node, so each user appears once
         const links = [];
