@@ -65,6 +65,9 @@ router.get('/pfp', async (req, res) => {
     try {
         const url = new URL(req.query.url);
 
+        const oe = url.searchParams.get('oe');
+        if (oe && parseInt(oe, 16) * 1000 < Date.now()) return res.status(410).send('Expired Image PFP');
+
         // https only, and only Instagram CDN hosts, otherwise this becomes an open proxy
         if (url.protocol !== 'https:' || !/(^|\.)cdninstagram\.com$|(^|\.)fbcdn\.net$/.test(url.hostname)) {
             return res.status(400).send('Invalid host');
@@ -88,4 +91,21 @@ router.get('/pfp', async (req, res) => {
         res.status(400).send('Bad request');
     }
 });
+
+router.get('/api/map', async (req, res) => {
+  try {
+    const { nodes, links } = await InstagramService.getMap();
+
+    res.json({
+      success: true,
+      nodes,
+      links,
+      count: nodes.length,
+    });
+  } catch (error) {
+    console.error('Error generating map:', error);
+    res.status(500).json({ error: getErrorMessage(error) });
+  }
+});
+
 module.exports = router;

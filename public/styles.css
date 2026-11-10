@@ -331,6 +331,11 @@ header h1 {
   animation-delay: calc(var(--i, 0) * 70ms);
 }
 
+.tab-panel:not([hidden]) .map * {
+  opacity: 1;
+  animation: none;
+}
+
 /* ─── RESULTS ────────────────────────────────────────────── */
 .results-section { margin-bottom: 28px; }
 
@@ -350,6 +355,14 @@ header h1 {
   line-height: 1;
 }
 
+/* ─── MAP ────────────────────────────────────────────── */
+.map {
+  height: 600px;        /* the reserved empty space */
+  background: var(--bg-input);
+  border: 1px solid var(--border);  /* adjust to your theme */
+  border-radius: 16px;
+  
+}
 /* ─── STATS ──────────────────────────────────────────────── */
 .stats {
   display: grid;
