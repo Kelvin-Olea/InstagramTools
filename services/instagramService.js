@@ -82,6 +82,46 @@ class InstagramService {
         return filteredList;
     }
 
+    getMap() {
+        const PREFIX = 'friends_';
+        const nodes = new Map();   // username -> node, so each user appears once
+        const links = [];
+        const seen = new Set();    // prevents duplicate links (alice-bob and bob-alice)
+
+        const addNode = (username, scanned = false, pic = '') => {            
+            const existing = nodes.get(username);
+            if (existing) {
+                if (scanned) existing.scanned = true;
+                if (pic && !existing.pic) existing.pic = pic;   // fill in a missing picture
+                return;
+            }
+            nodes.set(username, { id: username, scanned, pic, totalLinks: 0 });
+        };
+
+        for (const [key, friends] of this.cache) {
+            if (!key.startsWith(PREFIX)) continue;
+
+            const owner = key.slice(PREFIX.length);
+            addNode(owner, true);   // someone you actually scanned
+
+            for (const friend of friends) {
+                if (friend.username === owner) continue;
+                addNode(friend.username, false, friend.profile_pic_url);
+
+                const linkKey = [owner, friend.username].sort().join('|');
+                if (seen.has(linkKey)) continue;
+                seen.add(linkKey);
+
+                links.push({ source: owner, target: friend.username });
+
+                nodes.get(owner).totalLinks += 1;
+                nodes.get(friend.username).totalLinks += 1;
+            }
+        }
+
+        return { nodes: [...nodes.values()], links };
+    }
+
     async fetchUserId(username) {
         try {
             const cacheKey = `userid_${username}`
