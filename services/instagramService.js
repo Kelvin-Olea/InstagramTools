@@ -47,6 +47,8 @@ class InstagramService {
             return this.cache.get(cacheKey);
         }
 
+        await this.delay(this.randomBetween(8000, 12000))
+
         const userId = await this.fetchUserId(username);
 
         if (!userId) throw new Error(`Could not find user: ${username}`);
@@ -75,7 +77,7 @@ class InstagramService {
 
         if (!totalCount) throw new Error(`Could not get estimate: ${username}`);
 
-        return ((totalCount/20)*10)+8;
+        return ((totalCount/20)*10)+10;
     }
 
     async getFilteredList(filteredUsernames, booleanOperator) {
