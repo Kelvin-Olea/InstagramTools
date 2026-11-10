@@ -405,7 +405,6 @@
       svg.call(d3.zoom()
         .scaleExtent([0.2, 8])
         .on('zoom', e => {
-          console.log('zoom', e.transform);
           g.attr('transform', e.transform);
         }));
 
