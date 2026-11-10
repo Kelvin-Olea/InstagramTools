@@ -216,6 +216,7 @@
       loadingSection.style.display = 'none';
     }
 
+    // Convert seconds to mintes + seconds format //
     function formatDuration(totalSeconds) {
       const s = Math.max(0, Math.round(totalSeconds));
       const m = Math.floor(s / 60);
@@ -224,12 +225,14 @@
       return `${m}m ${sec.toString().padStart(2, '0')}s`;
     }
 
+    // Update text-estimate with seconds //
     function showEstimate(seconds) {
       document.getElementById('time-estimate').textContent = `~${formatDuration(seconds)}`;
     }
 
     let countdownTimer = null;
 
+    /* ---------- Time Estimate ---------- */
     function startCountdown(seconds) {
         clearInterval(countdownTimer);
         const el = document.getElementById('time-estimate');
@@ -375,8 +378,8 @@
         });
       }
     }
+    
     /* ---------- Rendering ---------- */
-
     function displayResults(data) {
 
       if (typeof data.usernames == "string"){
