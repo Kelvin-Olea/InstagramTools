@@ -357,7 +357,7 @@ header h1 {
 
 /* ─── MAP ────────────────────────────────────────────── */
 .map {
-  height: 400px;        /* the reserved empty space */
+  height: 600px;        /* the reserved empty space */
   background: var(--bg-input);
   border: 1px solid var(--border);  /* adjust to your theme */
   border-radius: 16px;

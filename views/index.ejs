@@ -403,7 +403,7 @@
 
       // Add a lister to the svg to detect mouse zoom + pan
       svg.call(d3.zoom()
-        .scaleExtent([0.2, 4])
+        .scaleExtent([0.2, 8])
         .on('zoom', e => {
           console.log('zoom', e.transform);
           g.attr('transform', e.transform);
@@ -447,7 +447,7 @@
         .attr('r', d => 1 + Math.pow(d.totalLinks, nodePower) * 1)        
         .attr('fill', (d, i) => d.pic ? `url(#pfp-${i})` : '#6b7280')      
         .attr('stroke', d => d.scanned ? '#8b5cf6' : 'rgba(255,255,255,0.3)')
-        .attr('stroke-width', 2)  
+        .attr('stroke-width', d => d.scanned ? 2 : 0.5)  
         .call(drag(simulation));
 
       node.append('title').text(d => d.id);   // hover tooltip
