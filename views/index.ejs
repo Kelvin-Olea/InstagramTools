@@ -302,17 +302,25 @@
         errorSection.style.display   = 'none';
         loadingSection.style.display = 'flex';
 
-        const res  = await fetch('/api/friends', {
+        // const res  = await fetch('/api/friends', {
+        //   method:  'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body:    JSON.stringify({ username })
+        // });
+
+        const res  = await fetch('/api/friends/estimate', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ username })
         });
+
         const data = await res.json();
 
         if (!res.ok) throw new Error(data.error || 'Failed to fetch friends');
 
         loadingSection.style.display = 'none';
-        displayResults(data);
+        showError(data.estimatedSeconds)
+        // displayResults(data);
         resultsSection.style.display = 'block';
       } catch (err) {
         loadingSection.style.display = 'none';
@@ -371,19 +379,6 @@
     }
 
     /* ---------- Generate The Map ---------- */
-    const data = {
-      nodes: [
-        { id: "alice" },
-        { id: "bob" },
-        { id: "carol" }
-      ],
-      links: [
-        { source: "alice", target: "bob" },
-        { source: "bob", target: "carol" }
-      ]
-    };
-
-
     function renderGraph(data) {
       const container = document.getElementById('map-results');
       container.innerHTML = '';
