@@ -154,7 +154,7 @@
           <div class="loader-inner"></div>
         </div>
         <p class="loading-text">Scanning profiles<span class="blink-dots"></span></p>
-        <p class="loading-sub">This may take a moment for large accounts</p>
+        <p class="loading-sub">Time Estimate: <span id="time-estimate">calculating...</span></p>
       </section>
 
       <!-- ERROR -->
@@ -214,6 +214,46 @@
       resultsSection.style.display = 'none';
       errorSection.style.display   = 'none';
       loadingSection.style.display = 'none';
+    }
+
+    // Convert seconds to mintes + seconds format //
+    function formatDuration(totalSeconds) {
+      const s = Math.max(0, Math.round(totalSeconds));
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      if (m === 0) return `${sec}s`;
+      return `${m}m ${sec.toString().padStart(2, '0')}s`;
+    }
+
+    // Update text-estimate with seconds //
+    function showEstimate(seconds) {
+      document.getElementById('time-estimate').textContent = `~${formatDuration(seconds)}`;
+    }
+
+    let countdownTimer = null;
+
+    /* ---------- Time Estimate ---------- */
+    function startCountdown(seconds) {
+        clearInterval(countdownTimer);
+        const el = document.getElementById('time-estimate');
+        const endTime = Date.now() + seconds * 1000;
+
+        const tick = () => {
+            const remaining = (endTime - Date.now()) / 1000;
+            if (remaining <= 0) {
+                el.textContent = 'almost done...';
+                clearInterval(countdownTimer);
+                return;
+            }
+            el.textContent = `~${formatDuration(remaining)}`;
+        };
+
+        tick();
+        countdownTimer = setInterval(tick, 1000);
+    }
+
+    function stopCountdown() {
+        clearInterval(countdownTimer);
     }
 
     // Add a listener to each tab button
@@ -301,6 +341,18 @@
         resultsSection.style.display = 'none';
         errorSection.style.display   = 'none';
         loadingSection.style.display = 'flex';
+        document.getElementById('time-estimate').textContent = 'calculating...';
+
+        const resEstimate = await fetch('/api/friends/estimate', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ username })
+        });
+        const estimateData = await resEstimate.json();
+
+        if (resEstimate.ok && estimateData.estimatedSeconds != null) {
+          startCountdown(estimateData.estimatedSeconds);
+        }
 
         const res  = await fetch('/api/friends', {
           method:  'POST',
@@ -311,22 +363,23 @@
 
         if (!res.ok) throw new Error(data.error || 'Failed to fetch friends');
 
+        stopCountdown();
         loadingSection.style.display = 'none';
         displayResults(data);
         resultsSection.style.display = 'block';
       } catch (err) {
+        stopCountdown();
         loadingSection.style.display = 'none';
         showError(err.message);
       } finally {
         document.querySelectorAll('.scan-btn').forEach(btn => {
           btn.disabled = false;
           btn.textContent = "Run Scan";
-        })
+        });
       }
     }
-
+    
     /* ---------- Rendering ---------- */
-
     function displayResults(data) {
 
       if (typeof data.usernames == "string"){
@@ -371,19 +424,6 @@
     }
 
     /* ---------- Generate The Map ---------- */
-    const data = {
-      nodes: [
-        { id: "alice" },
-        { id: "bob" },
-        { id: "carol" }
-      ],
-      links: [
-        { source: "alice", target: "bob" },
-        { source: "bob", target: "carol" }
-      ]
-    };
-
-
     function renderGraph(data) {
       const container = document.getElementById('map-results');
       container.innerHTML = '';

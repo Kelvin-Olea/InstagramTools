@@ -47,6 +47,8 @@ class InstagramService {
             return this.cache.get(cacheKey);
         }
 
+        await this.delay(this.randomBetween(8000, 12000))
+
         const userId = await this.fetchUserId(username);
 
         if (!userId) throw new Error(`Could not find user: ${username}`);
@@ -63,6 +65,19 @@ class InstagramService {
         this.saveCache();
 
         return friends;
+    }
+
+    async estimateFriendsTime(username) {
+        const cacheKey = `friends_${username}`;
+        if (this.cache.has(cacheKey)) {
+            return 0;
+        }
+
+        const totalCount = await this.fetchTotalCount(username);
+
+        if (!totalCount) throw new Error(`Could not get estimate: ${username}`);
+
+        return ((totalCount/20)*10)+10;
     }
 
     async getFilteredList(filteredUsernames, booleanOperator) {
@@ -159,6 +174,38 @@ class InstagramService {
             throw new Error(`Failed to fetch user info for ${username}: ${error.message}`);
         }
     }
+
+    async fetchTotalCount(username) {
+        try {
+            const url = `${this.baseUrl}/${username}/`;
+            const response = await fetch(url, { headers: this.getUserIDHeaders()});
+                    
+            if (response.status === 404) return null;
+            if (response.status === 429) throw new Error('Rate limited (429). Wait a few minutes before retrying.');
+            if (response.status === 401) throw new Error('Invalid or expired Session ID. Please update INSTAGRAM_SESSION_ID in .env');
+            if (!response.ok) throw new Error(`Instagram returned status ${response.status}`);
+
+            // Check if the URL we're redirected to is the login page, authentication page, or directly challenged
+            if (/accounts\/login|auth_platform|challenge/.test(response.url)) {
+                throw new Error('Session invalid or challenged. Update cookies in .env');
+            }
+
+            const html = await response.text();
+
+            const { followers, following } = await this.parseHtmlFoConnectionsCount(html);
+
+            if (!followers) {throw new Error("Unable to find followers")};
+            if (!following) {throw new Error("Unable to find following")};
+
+            return Number(followers) + Number(following);
+            
+        } catch (error) {
+            if (error.message.includes('session')) throw error;
+            throw new Error(`Failed to fetch user info for ${username}: ${error.message}`);
+        }
+    }
+
+
 
     // Fetch paginated followers list via friendships endpoint //
     async fetchFollowersList(userId, username) {
@@ -345,6 +392,19 @@ class InstagramService {
         }
         return null;
     }
+
+    async parseHtmlFoConnectionsCount(html){
+        const re =  /content="(\d+) Followers, (\d+) Following/g;
+
+        // Full Match (m[0]) is the entire captured text
+        // Group 1 (m[1]) is the followers
+        // Group 2 (m[2]) is the following
+        for (const m of html.matchAll(re)) {
+            return { followers: m[1], following: m[2] };
+        }
+        return null;
+    }
+
 
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
