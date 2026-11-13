@@ -1,6 +1,6 @@
 // CONSTANTS //
-const MIN_SCAN_DELAY = 8000; // ms
-const MAX_SCAN_DELAY = 12000; // ms
+const MIN_SCAN_DELAY = 6000; // ms
+const MAX_SCAN_DELAY = 10000; // ms
 
 const USERS_PER_SCAN = 25;
 
