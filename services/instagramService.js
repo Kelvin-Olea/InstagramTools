@@ -77,7 +77,7 @@ class InstagramService {
 
         if (!totalCount) throw new Error(`Could not get estimate: ${username}`);
 
-        return ((totalCount/20)*10)+10;
+        return ((totalCount/20)*12)+10;
     }
 
     async getFilteredList(filteredUsernames, booleanOperator) {
@@ -99,15 +99,16 @@ class InstagramService {
 
     getMap() {
         const PREFIX = 'friends_';
-        const nodes = new Map();   // username -> node, so each user appears once
-        const links = [];
-        const seen = new Set();    // prevents duplicate links (alice-bob and bob-alice)
+        const MIN_LINKS = 2;
+        const nodes = new Map();
+        let links = [];
+        const seen = new Set();
 
-        const addNode = (username, scanned = false, pic = '') => {            
+        const addNode = (username, scanned = false, pic = '') => {
             const existing = nodes.get(username);
             if (existing) {
                 if (scanned) existing.scanned = true;
-                if (pic && !existing.pic) existing.pic = pic;   // fill in a missing picture
+                if (pic && !existing.pic) existing.pic = pic;
                 return;
             }
             nodes.set(username, { id: username, scanned, pic, totalLinks: 0 });
@@ -117,7 +118,7 @@ class InstagramService {
             if (!key.startsWith(PREFIX)) continue;
 
             const owner = key.slice(PREFIX.length);
-            addNode(owner, true);   // someone you actually scanned
+            addNode(owner, true);
 
             for (const friend of friends) {
                 if (friend.username === owner) continue;
@@ -128,13 +129,63 @@ class InstagramService {
                 seen.add(linkKey);
 
                 links.push({ source: owner, target: friend.username });
-
                 nodes.get(owner).totalLinks += 1;
                 nodes.get(friend.username).totalLinks += 1;
             }
         }
 
-        return { nodes: [...nodes.values()], links };
+        // Lookup of who is linked to whom
+        const adj = new Map();   // id -> Set of neighbor ids
+        for (const l of links) {
+            if (!adj.has(l.source)) adj.set(l.source, new Set());
+            if (!adj.has(l.target)) adj.set(l.target, new Set());
+            adj.get(l.source).add(l.target);
+            adj.get(l.target).add(l.source);
+        }
+
+        // Identifies a link regardless of which end is source/target
+        const edgeKey = (x, y) => [x, y].sort().join('|');
+
+        const scannedIds = [...nodes.values()].filter(n => n.scanned).map(n => n.id);
+        const cut = new Set();   // links to remove
+
+        for (let i = 0; i < scannedIds.length; i++) {
+            for (let j = i + 1; j < scannedIds.length; j++) {
+                const a = scannedIds[i];
+                const b = scannedIds[j];
+
+                if (!adj.get(a)?.has(b)) continue;   // a and b aren't directly linked
+
+                for (const n of adj.get(a)) {
+                    if (n === b || nodes.get(n).scanned) continue;
+                    if (adj.get(b).has(n)) {
+                        // n only needs to be cut off from a and b, not deleted
+                        cut.add(edgeKey(n, a));
+                        cut.add(edgeKey(n, b));
+                    }
+                }
+            }
+        }
+
+        // Drop the cut links, then recount so sizes and the MIN_LINKS filter use the new numbers
+        links = links.filter(l => !cut.has(edgeKey(l.source, l.target)));
+
+        nodes.forEach(n => { n.totalLinks = 0; });
+        for (const l of links) {
+            nodes.get(l.source).totalLinks += 1;
+            nodes.get(l.target).totalLinks += 1;
+        }
+
+        // Remove non-scanned users with fewer than MIN_LINKS connections
+        const keptNodes = [...nodes.values()].filter(
+            n => n.scanned || n.totalLinks >= MIN_LINKS
+        );
+        const keptIds = new Set(keptNodes.map(n => n.id));
+        const keptLinks = links.filter(
+            l => keptIds.has(l.source) && keptIds.has(l.target)
+        );
+
+        return { nodes: keptNodes, links: keptLinks };
     }
 
     async fetchUserId(username) {
