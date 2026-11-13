@@ -432,6 +432,7 @@
       const height = container.clientHeight;
 
       const nodePower = 1/1.8
+      const radius = d => 1 + Math.pow(d.totalLinks, nodePower);
 
       const svg = d3.select(container)
         .append('svg')
@@ -450,11 +451,11 @@
 
       // Simulate the forces acting on the nodes
       const simulation = d3.forceSimulation(data.nodes)
-        .force('link', d3.forceLink(data.links).id(d => d.id).distance(7))
-        .force('charge', d3.forceManyBody().strength(-30))
-        .force('x', d3.forceX(width / 2).strength(0.4))
-        .force('y', d3.forceY(height / 2).strength(0.4))        
-        .force('collide', d3.forceCollide(d => 1 + Math.pow(d.totalLinks, nodePower) * 1 + 1));
+        .force('link', d3.forceLink(data.links).id(d => d.id).distance(l => 10 + radius(l.source) + radius(l.target)))
+        .force('charge', d3.forceManyBody().strength(d => -30 - radius(d) * 25))
+        .force('x', d3.forceX(width / 2).strength(0.05))
+        .force('y', d3.forceY(height / 2).strength(0.05))
+        .force('collide', d3.forceCollide(d => radius(d) + 2));
 
       const defs = svg.append('defs');
 
