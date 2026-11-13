@@ -77,7 +77,7 @@ class InstagramService {
 
         if (!totalCount) throw new Error(`Could not get estimate: ${username}`);
 
-        return ((totalCount/20)*10)+10;
+        return ((totalCount/20)*12)+10;
     }
 
     async getFilteredList(filteredUsernames, booleanOperator) {
