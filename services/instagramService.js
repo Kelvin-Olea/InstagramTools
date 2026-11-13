@@ -1,3 +1,9 @@
+// CONSTANTS //
+const MIN_SCAN_DELAY = 8000; // ms
+const MAX_SCAN_DELAY = 12000; // ms
+
+const USERS_PER_SCAN = 25;
+
 const fetch = require('node-fetch');
 const fs = require('fs');
 require('dotenv').config();
@@ -47,7 +53,7 @@ class InstagramService {
             return this.cache.get(cacheKey);
         }
 
-        await this.delay(this.randomBetween(8000, 12000))
+        await this.delay(this.randomBetween(MIN_SCAN_DELAY, MAX_SCAN_DELAY))
 
         const userId = await this.fetchUserId(username);
 
@@ -56,7 +62,7 @@ class InstagramService {
         // Add a way to ensure the user is either public, or someone we're following //
 
         const followers = await this.fetchFollowersList(userId, username);
-        await this.delay(this.randomBetween(8000, 12000))
+        await this.delay(this.randomBetween(MIN_SCAN_DELAY, MAX_SCAN_DELAY))
         const following = await this.fetchFollowingList(userId, username);
 
         const friends = await this.findIntersection([followers, following]);
@@ -77,7 +83,7 @@ class InstagramService {
 
         if (!totalCount) throw new Error(`Could not get estimate: ${username}`);
 
-        return ((totalCount/25)*12)+10;
+        return ((totalCount/USERS_PER_SCAN)*MAX_SCAN_DELAY)+MAX_SCAN_DELAY;
     }
 
     async getFilteredList(filteredUsernames, booleanOperator) {
@@ -223,7 +229,7 @@ class InstagramService {
 
             const userId = await this.parseHtmlForUserId(html);
             if (!userId) {throw new Error("Unable to find UserId")};
-            await this.delay(8000); // Force wait 8 seconds after sending any html request
+            await this.delay(MIN_SCAN_DELAY); // Force wait 8 seconds after sending any html request
 
             this.cache.set(cacheKey, userId.id);
             this.saveCache();
@@ -281,7 +287,7 @@ class InstagramService {
 
         // try{
             while (hasMore){
-                const params = new URLSearchParams({ count: '25' });
+                const params = new URLSearchParams({ count: USERS_PER_SCAN });
 
                 if (maxId) params.set('max_id', maxId);
                 
@@ -316,7 +322,7 @@ class InstagramService {
 
                 console.log(maxId);
 
-                if (hasMore) await this.delay(this.randomBetween(8000, 12000));
+                if (hasMore) await this.delay(this.randomBetween(MIN_SCAN_DELAY, MAX_SCAN_DELAY));
 
             } 
         // } 
@@ -342,7 +348,7 @@ class InstagramService {
 
         // try{
             while (hasMore){
-                const params = new URLSearchParams({ count: '25' });
+                const params = new URLSearchParams({ count: USERS_PER_SCAN });
 
                 if (maxId) params.set('max_id', maxId);
                 
@@ -377,7 +383,7 @@ class InstagramService {
 
                 console.log(maxId);
 
-                if (hasMore) await this.delay(this.randomBetween(8000, 12000));
+                if (hasMore) await this.delay(this.randomBetween(MIN_SCAN_DELAY, MAX_SCAN_DELAY));
 
             } 
         // } 
