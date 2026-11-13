@@ -85,7 +85,9 @@ class InstagramService {
 
         if (!totalCount) throw new Error(`Could not get estimate: ${username}`);
 
-        return ((totalCount/USERS_PER_SCAN)*MAX_SCAN_DELAY)+MAX_SCAN_DELAY;
+        const maxScanDelaySeconds = MAX_SCAN_DELAY/1000
+
+        return ((totalCount/USERS_PER_SCAN)*maxScanDelaySeconds)+maxScanDelaySeconds;
     }
 
     async getFilteredList(filteredUsernames, booleanOperator) {
