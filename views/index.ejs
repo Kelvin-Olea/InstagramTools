@@ -486,7 +486,8 @@
         .data(data.nodes)
         .join('circle')
         .attr('r', d => 1 + Math.pow(d.totalLinks, nodePower) * 1)        
-        .attr('fill', (d, i) => d.pic ? `url(#pfp-${i})` : '#6b7280')      
+        // .attr('fill', (d, i) => d.pic ? `url(#pfp-${i})` : '#6b7280') DISABLE PFP FOR PRIVACY FOR DEMO PICS
+        .attr('fill', '#6b7280')         
         .attr('stroke', d => d.scanned ? '#8b5cf6' : 'rgba(255,255,255,0.3)')
         .attr('stroke-width', d => d.scanned ? 2 : 0.5)  
         .call(drag(simulation));
