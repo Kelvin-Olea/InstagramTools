@@ -48,6 +48,7 @@ class InstagramService {
 
     // Get who user is friends with //
     async getFriends(username) {
+        username = username.toLowerCase()
         const cacheKey = `friends_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
@@ -74,6 +75,7 @@ class InstagramService {
     }
 
     async estimateFriendsTime(username) {
+        username = username.toLowerCase()
         const cacheKey = `friends_${username}`;
         if (this.cache.has(cacheKey)) {
             return 0;
@@ -91,11 +93,13 @@ class InstagramService {
         let cachedLists = []
 
         for (const params of filteredUsernames) {
-            if (this.cache.has(`${params[1]}_${params[0]}`)) {
-                cachedLists.push(this.cache.get(`${params[1]}_${params[0]}`))
+            const name = params[0].toLowerCase();
+            const key = `${params[1]}_${name}`;
+            if (this.cache.has(key)) {
+                cachedLists.push(this.cache.get(key));
             } else {
-                throw Error(`User ${params[0]} does not exist in the cache. Run them through the friend finder first.`)
-            }
+                throw Error(`User ${name} does not exist in the cache. Run them through the friend finder first.`);
+            }        
         }
 
         const filteredList = await this.findIntersection([cachedLists[0], cachedLists[1]], booleanOperator);
@@ -161,20 +165,24 @@ class InstagramService {
                 const a = scannedIds[i];
                 const b = scannedIds[j];
 
-                if (!adj.get(a)?.has(b)) { // a and b aren't directly linked
-                for (const n of adj.get(a)) {
-                    if (n === b || nodes.get(n).scanned) continue;
-                    if (adj.get(b).has(n)) {
-                        // n only needs to be cut off from a and b, not deleted
-                        protect.add(edgeKey(n, a));
-                        protect.add(edgeKey(n, b));
+                // Scanned users with no links aren't in adj, so default to empty sets
+                const adjA = adj.get(a) ?? new Set();
+                const adjB = adj.get(b) ?? new Set();
+
+                if (!adjA.has(b)) { // a and b aren't directly linked
+                    for (const n of adjA) {
+                        if (n === b || nodes.get(n).scanned) continue;
+                        if (adjB.has(n)) {
+                            // n only needs to be cut off from a and b, not deleted
+                            protect.add(edgeKey(n, a));
+                            protect.add(edgeKey(n, b));
+                        }
                     }
                 }
-                };
 
-                for (const n of adj.get(a)) {
+                for (const n of adjA) {
                     if (n === b || nodes.get(n).scanned) continue;
-                    if (adj.get(b).has(n)) {
+                    if (adjB.has(n)) {
                         // n only needs to be cut off from a and b, not deleted
                         cut.add(edgeKey(n, a));
                         cut.add(edgeKey(n, b));
@@ -206,6 +214,7 @@ class InstagramService {
 
     async fetchUserId(username) {
         try {
+            username = username.toLowerCase()
             const cacheKey = `userid_${username}`
             if (this.cache.has(cacheKey)){
                 return this.cache.get(cacheKey);
@@ -276,6 +285,7 @@ class InstagramService {
 
     // Fetch paginated followers list via friendships endpoint //
     async fetchFollowersList(userId, username) {
+        username = username.toLowerCase()
         const cacheKey = `followers_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
@@ -308,7 +318,7 @@ class InstagramService {
                 users.forEach(user => {
                     if (user.username) {
                         followers.push({
-                            username: user.username,
+                            username: user.username.toLowerCase(),
                             id: user.pk,
                             full_name: user.full_name || '',
                             profile_pic_url: user.profile_pic_url || '',
@@ -337,6 +347,7 @@ class InstagramService {
 
     // Fetch paginated following list via friendships endpoint //
     async fetchFollowingList(userId, username) {
+        username = username.toLowerCase()
         const cacheKey = `following_${username}`;
         if (this.cache.has(cacheKey)) {
             return this.cache.get(cacheKey);
@@ -369,7 +380,7 @@ class InstagramService {
                 users.forEach(user => {
                     if (user.username) {
                         following.push({
-                            username: user.username,
+                            username: user.username.toLowerCase(),
                             id: user.pk,
                             full_name: user.full_name || '',
                             profile_pic_url: user.profile_pic_url || '',
@@ -489,7 +500,13 @@ class InstagramService {
     loadCache() {
         try {
             const entries = JSON.parse(fs.readFileSync(this.cacheFile, 'utf8'));
-            this.cache = new Map(entries);
+            this.cache = new Map(entries.map(([key, value]) => {
+                const k = key.toLowerCase();
+                const v = Array.isArray(value)
+                    ? value.map(u => ({ ...u, username: u.username?.toLowerCase() }))
+                    : value;
+                return [k, v];
+            }));
         } catch (err) {
             if (err.code !== 'ENOENT') console.warn(`Could not load cache: ${err.message}`); // ENOENT = first run, no file yet
         }
