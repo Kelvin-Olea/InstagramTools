@@ -101,7 +101,7 @@ class InstagramService {
         const PREFIX = 'friends_';
         const MIN_LINKS = 2;
         const nodes = new Map();
-        const links = [];
+        let links = [];
         const seen = new Set();
 
         const addNode = (username, scanned = false, pic = '') => {
@@ -132,6 +132,48 @@ class InstagramService {
                 nodes.get(owner).totalLinks += 1;
                 nodes.get(friend.username).totalLinks += 1;
             }
+        }
+
+        // Lookup of who is linked to whom
+        const adj = new Map();   // id -> Set of neighbor ids
+        for (const l of links) {
+            if (!adj.has(l.source)) adj.set(l.source, new Set());
+            if (!adj.has(l.target)) adj.set(l.target, new Set());
+            adj.get(l.source).add(l.target);
+            adj.get(l.target).add(l.source);
+        }
+
+        // Identifies a link regardless of which end is source/target
+        const edgeKey = (x, y) => [x, y].sort().join('|');
+
+        const scannedIds = [...nodes.values()].filter(n => n.scanned).map(n => n.id);
+        const cut = new Set();   // links to remove
+
+        for (let i = 0; i < scannedIds.length; i++) {
+            for (let j = i + 1; j < scannedIds.length; j++) {
+                const a = scannedIds[i];
+                const b = scannedIds[j];
+
+                if (!adj.get(a)?.has(b)) continue;   // a and b aren't directly linked
+
+                for (const n of adj.get(a)) {
+                    if (n === b || nodes.get(n).scanned) continue;
+                    if (adj.get(b).has(n)) {
+                        // n only needs to be cut off from a and b, not deleted
+                        cut.add(edgeKey(n, a));
+                        cut.add(edgeKey(n, b));
+                    }
+                }
+            }
+        }
+
+        // Drop the cut links, then recount so sizes and the MIN_LINKS filter use the new numbers
+        links = links.filter(l => !cut.has(edgeKey(l.source, l.target)));
+
+        nodes.forEach(n => { n.totalLinks = 0; });
+        for (const l of links) {
+            nodes.get(l.source).totalLinks += 1;
+            nodes.get(l.target).totalLinks += 1;
         }
 
         // Remove non-scanned users with fewer than MIN_LINKS connections
