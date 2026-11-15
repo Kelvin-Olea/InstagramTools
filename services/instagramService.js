@@ -474,13 +474,13 @@ class InstagramService {
     }
 
     async parseHtmlFoConnectionsCount(html){
-        const re =  /content="(\d+) Followers, (\d+) Following/g;
+        const re =  /content="([\d,.]+) Followers, ([\d,.]+) Following/g;
 
         // Full Match (m[0]) is the entire captured text
         // Group 1 (m[1]) is the followers
         // Group 2 (m[2]) is the following
         for (const m of html.matchAll(re)) {
-            return { followers: m[1], following: m[2] };
+            return { followers: m[1].replace(/,/g, ''), following: m[2].replace(/,/g, '') };
         }
         return null;
     }
