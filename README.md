@@ -297,7 +297,7 @@ Image proxy so the browser can load Instagram profile pictures. Only HTTPS URLs 
 
 ## License
 
-ISC
+ISC, see [LICENSE](LICENSE).
 
 ---
 
