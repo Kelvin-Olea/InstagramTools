@@ -4,6 +4,18 @@ A Node.js/Express web app for exploring Instagram follower and following lists. 
 
 > Forked from [OscarFromNZ/InstagramMutualFollowerChecker](https://github.com/OscarFromNZ/InstagramMutualFollowerChecker). This fork adds a tabbed Target Profiles interface, a cached user store, a graph map view, and more in-depth API calls to simulate human action to avoid detection.
 
+## Screenshots
+
+### Map
+*Profiles + Usernames hidden for privacy reasons.*
+
+<img src="screenshots/Map.png" alt="Map view" width="600">
+
+### Friends tab
+*Profiles + Usernames hidden for privacy reasons.*
+
+<img src="screenshots/FriendsTab.png" alt="Friends tab" width="600">
+
 ## ❗ Warning ❗
 
 This tool sends requests to Instagram using your logged-in session cookies. Using it risks getting your account **flagged, restricted, or banned**. Use it at your own risk, ideally with an account you can afford to lose. The request pacing described below lowers the odds of being flagged but does not eliminate them.
