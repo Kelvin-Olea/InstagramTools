@@ -74,11 +74,11 @@ Profile pictures are intentionally disabled on the map so nobody's photo is show
 
 1. Clone the project:
    ```bash
-   git clone <your-fork-url>
+   git clone https://github.com/Kelvin-Olea/InstagramTools.git
    ```
 2. Navigate into the project:
    ```bash
-   cd <your-repo-folder>/
+   cd InstagramTools
    ```
 3. Install dependencies:
    ```bash
